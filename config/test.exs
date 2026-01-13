@@ -17,7 +17,7 @@ config :framelens, Framelens.Repo,
 # you can enable the server option below.
 config :framelens, FramelensWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "CSSVbtMwb/0xlWFOY6NNJsTqHr4lGSxAxJHHT/gk/Y9zKxtETqQv8Cmu4S3re9tr",
+  secret_key_base: "LXqi14VJ8IRDSZFzQtkiYPoXn1YkfPB49Ue/6jDJ6Os18wwrmnQT4fia3mnRyLaG",
   server: false
 
 # In test we don't send emails

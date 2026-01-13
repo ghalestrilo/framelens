@@ -7,7 +7,7 @@ defmodule FramelensWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_framelens_key",
-    signing_salt: "C3nChPhq",
+    signing_salt: "17TSqFFt",
     same_site: "Lax"
   ]
 

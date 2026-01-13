@@ -20,7 +20,7 @@ config :framelens, FramelensWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Framelens.PubSub,
-  live_view: [signing_salt: "/S/UxSFT"]
+  live_view: [signing_salt: "N4QkjH+R"]
 
 # Configures the mailer
 #

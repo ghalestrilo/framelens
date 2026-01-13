@@ -23,7 +23,7 @@ config :framelens, FramelensWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "7+YRzTsnO0o6xP+IzKA51LUW4o8o5pofkRHQpzW70dIz+Ib1qR2C9WWz8XOIGHOD",
+  secret_key_base: "xtxVuImvW1nM2R9rQrDHw1ikCBpndMltfOhCpNa+sG2eCpP4o5LLOydCzNMRqEhX",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:framelens, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:framelens, ~w(--watch)]}

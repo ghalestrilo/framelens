@@ -2,6 +2,7 @@ defmodule FramelensWeb.PageLive do
   use FramelensWeb, :live_view
 
   alias Framelens.Scraper
+
   def mount(_params, _session, socket) do
     send(self(), :do_sync)
     {:ok, assign(socket, videos: [], syncing: true)}

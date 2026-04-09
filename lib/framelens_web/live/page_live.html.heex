@@ -18,8 +18,8 @@
       <table class="table table-zebra w-full">
         <thead>
           <tr>
-            <th class="bg-base-200">Time</th>
             <th class="bg-base-200">Author</th>
+            <th class="bg-base-200 w-32">Time</th>
             <th class="bg-base-200">Title</th>
             <th class="bg-base-200 text-center">YouTube</th>
             <th class="bg-base-200 text-center">Facebook</th>
@@ -31,7 +31,7 @@
           <%= for video <- @videos do %>
             <tr>
               <td class="text-base-content/70"><%= Map.get(dbg(video), :author, "") %></td>
-              <td class="text-base-content/70"><%= Map.get(video, :updated, nil) %></td>
+              <td class="text-base-content/70"><%= video |> Map.get(:updated, nil) |> DateTime.to_date() %></td>
               <td class="font-medium"><%= video.title %></td>
               <td class="text-center">
                 <%= if Map.get(video, :url) do %>

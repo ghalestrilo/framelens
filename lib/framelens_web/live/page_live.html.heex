@@ -4,10 +4,9 @@
     <div class="mb-8 flex justify-between items-center">
       <h1 class="text-3xl font-bold">Video Library</h1>
       <div class="flex items-center gap-4">
-        <form action="/sync" method="post">
-          <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
-          <button type="submit" class="btn btn-primary">Sync</button>
-        </form>
+        <button phx-click="sync" class="btn btn-primary" disabled={@syncing}>
+          Sync
+        </button>
         <Layouts.theme_toggle />
       </div>
     </div>
@@ -16,8 +15,9 @@
       <table class="table table-zebra w-full">
         <thead>
           <tr>
-            <th class="bg-base-200">Title</th>
+            <th class="bg-base-200">Time</th>
             <th class="bg-base-200">Author</th>
+            <th class="bg-base-200">Title</th>
             <th class="bg-base-200 text-center">YouTube</th>
             <th class="bg-base-200 text-center">Facebook</th>
             <th class="bg-base-200 text-center">TikTok</th>
@@ -27,12 +27,13 @@
         <tbody>
           <%= for video <- @videos do %>
             <tr>
+              <td class="text-base-content/70"><%= Map.get(dbg(video), :author, "") %></td>
+              <td class="text-base-content/70"><%= Map.get(video, :updated, nil) %></td>
               <td class="font-medium"><%= video.title %></td>
-              <td class="text-base-content/70"><%= video.author_handle %></td>
               <td class="text-center">
-                <%= if video.youtube do %>
+                <%= if Map.get(video, :url) do %>
                   <a
-                    href={video.youtube}
+                    href={video.url}
                     target="_blank"
                     class="btn btn-sm btn-ghost hover:btn-error"
                     title="Watch on YouTube"
@@ -51,7 +52,7 @@
                 <% end %>
               </td>
               <td class="text-center">
-                <%= if video.facebook do %>
+                <%= if Map.get(video, :facebook) do %>
                   <a
                     href={video.facebook}
                     target="_blank"
@@ -72,7 +73,7 @@
                 <% end %>
               </td>
               <td class="text-center">
-                <%= if video.tiktok do %>
+                <%= if Map.get(video, :tiktok) do %>
                   <a
                     href={video.tiktok}
                     target="_blank"
@@ -93,7 +94,7 @@
                 <% end %>
               </td>
               <td class="text-center">
-                <%= if video.instagram do %>
+                <%= if Map.get(video, :instagram) do %>
                   <a
                     href={video.instagram}
                     target="_blank"

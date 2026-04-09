@@ -1,0 +1,14 @@
+[tools]
+elixir = "1.18"
+
+[tasks."dev:db"]
+description = "Start the database"
+run = "docker-compose up db"
+
+[tasks."dev:server"]
+description = "Start the Phoenix server"
+run = "mix phx.server"
+
+[tasks.dev]
+description = "Start the database and Phoenix server"
+depends = ["dev:db", "dev:server"]

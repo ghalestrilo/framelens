@@ -2,10 +2,10 @@ import Config
 
 # Configure your database
 config :framelens, Framelens.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "framelens_dev",
+  username: System.get_env("DATABASE_USER") || "postgres",
+  password: System.get_env("DATABASE_PASSWORD") || "postgres",
+  hostname: System.get_env("DATABASE_HOST") || "localhost",
+  database: System.get_env("DATABASE_NAME") || "framelens_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -19,7 +19,11 @@ config :framelens, Framelens.Repo,
 config :framelens, FramelensWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("PORT") || "4000")],
+  # In Docker, bind to all interfaces
+  http: [
+    ip: if(System.get_env("DOCKER_ENV"), do: {0, 0, 0, 0}, else: {127, 0, 0, 1}),
+    port: String.to_integer(System.get_env("PORT") || "4000")
+  ],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,

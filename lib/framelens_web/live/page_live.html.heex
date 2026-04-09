@@ -5,6 +5,9 @@
       <h1 class="text-3xl font-bold">Video Library</h1>
       <div class="flex items-center gap-4">
         <button phx-click="sync" class="btn btn-primary" disabled={@syncing}>
+          <%= if @syncing do %>
+            <span class="loading loading-spinner loading-sm"></span>
+          <% end %>
           Sync
         </button>
         <Layouts.theme_toggle />

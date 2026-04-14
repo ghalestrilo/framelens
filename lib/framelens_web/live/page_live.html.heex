@@ -30,7 +30,7 @@
         <tbody>
           <%= for video <- @videos do %>
             <tr>
-              <td class="text-base-content/70"><%= Map.get(dbg(video), :author, "") %></td>
+              <td class="text-base-content/70"><%= Map.get(video, :author, "") %></td>
               <td class="text-base-content/70"><%= video |> Map.get(:updated, nil) |> DateTime.to_date() %></td>
               <td class="font-medium"><%= video.title %></td>
               <td class="text-center">

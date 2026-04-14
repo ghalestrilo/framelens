@@ -470,3 +470,50 @@ youtube_channels = [
   %{youtube_id: "UCzdg4pZb-viC3EdA1zxRl4A", name: "Hundred Rabbits"},
   %{youtube_id: "UCzrOVL8MeVbleImcTKYdrIA", name: "Andrew Kilpatrick"}
 ]
+
+# Seed the 5 channels currently scraped by Framelens.Scraper
+alias Framelens.Repo
+alias Framelens.Creators.{Creator, CreatorPlatform}
+alias Framelens.Subscriptions.Follow
+alias Framelens.Accounts
+
+scraped_channels = [
+  %{youtube_id: "UC--VosYH0BHISbb4SFO9rQA", name: "Zheanna Erose"},
+  %{youtube_id: "UC-2LWDrIxHOd2mnt1RHbzrg", name: "Olivia Jack"},
+  %{youtube_id: "UC-8QAzbLcRglXeN_MY9blyw", name: "Ben Awad"},
+  %{youtube_id: "UC-8Uff7i2h5qtIvjXJDJqYA", name: "Minhas Plantas"},
+  %{youtube_id: "UC-ZX7WqyBL9k1OO7jCtIZQA", name: "쿄쿄쿜"}
+]
+
+test_user = Accounts.get_user_by_email("ghalestrilo@gmail.com")
+
+if test_user do
+  creator_ids =
+    Enum.map(scraped_channels, fn %{youtube_id: youtube_id, name: name} ->
+      creator =
+        case Repo.get_by(Creator, name: name) do
+          nil -> Repo.insert!(%Creator{name: name})
+          existing -> existing
+        end
+
+      Repo.insert!(
+        %CreatorPlatform{creator_id: creator.id, platform: "youtube", platform_id: youtube_id},
+        on_conflict: :nothing,
+        conflict_target: [:platform, :platform_id]
+      )
+
+      creator.id
+    end)
+
+  Enum.each(creator_ids, fn creator_id ->
+    Repo.insert!(
+      %Follow{user_id: test_user.id, creator_id: creator_id},
+      on_conflict: :nothing,
+      conflict_target: [:user_id, :creator_id]
+    )
+  end)
+
+  IO.puts("Seeded #{length(creator_ids)} creators and follows for #{test_user.email}")
+else
+  IO.puts("User ghalestrilo@gmail.com not found — skipping creator/follow seed")
+end

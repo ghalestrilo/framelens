@@ -17,4 +17,18 @@ defmodule Framelens.SubscriptionsFixtures do
 
     subscription
   end
+
+  @doc """
+  Generate a follow.
+  """
+  def follow_fixture(attrs \\ %{}) do
+    {:ok, follow} =
+      attrs
+      |> Enum.into(%{
+
+      })
+      |> Framelens.Subscriptions.create_follow()
+
+    follow
+  end
 end

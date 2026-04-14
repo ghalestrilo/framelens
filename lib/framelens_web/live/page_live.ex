@@ -1,7 +1,7 @@
 defmodule FramelensWeb.PageLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.Scraper
+  alias Framelens.{Scraper, Subscriptions}
 
   def mount(_params, _session, socket) do
     send(self(), :do_sync)
@@ -14,7 +14,9 @@ defmodule FramelensWeb.PageLive do
   end
 
   def handle_info(:do_sync, socket) do
-    videos = Scraper.sync()
+    user_id = socket.assigns.current_scope.user.id
+    channels = Subscriptions.youtube_platforms_for_user(user_id)
+    videos = Scraper.sync(channels)
     {:noreply, assign(socket, videos: videos, syncing: false)}
   end
 end

@@ -95,6 +95,19 @@ defmodule Framelens.Subscriptions do
     raise "TODO"
   end
 
+  alias Framelens.Subscriptions.Follow
+  alias Framelens.Creators.{Creator, CreatorPlatform}
+
+  def youtube_platforms_for_user(user_id) do
+    Repo.all(
+      from f in Follow,
+        join: c in Creator, on: c.id == f.creator_id,
+        join: p in CreatorPlatform, on: p.creator_id == c.id,
+        where: f.user_id == ^user_id and p.platform == "youtube",
+        select: %{youtube_id: p.platform_id, name: c.name}
+    )
+  end
+
   def get_all_content(%{youtube_id: youtube_id}) do
     youtube_rss_url = "https://www.youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
     with {:ok, youtube_feed} <- ElixirRss.fetch_and_parse(youtube_rss_url) do
@@ -102,8 +115,6 @@ defmodule Framelens.Subscriptions do
       {:ok, Enum.map(youtube_feed.entries, &Map.put(&1, :author, title))}
     end
   end
-
-  alias Framelens.Subscriptions.Follow
 
   @doc """
   Returns the list of follows.

@@ -19,8 +19,6 @@ defmodule FramelensWeb.Router do
 
   scope "/", FramelensWeb do
     pipe_through :browser
-
-    live "/", PageLive
   end
 
   # Other scopes may use custom stacks.
@@ -64,6 +62,7 @@ defmodule FramelensWeb.Router do
 
     live_session :current_user,
       on_mount: [{FramelensWeb.UserAuth, :mount_current_scope}] do
+      live "/", PageLive
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new

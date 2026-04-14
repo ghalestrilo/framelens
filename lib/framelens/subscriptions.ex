@@ -98,22 +98,24 @@ defmodule Framelens.Subscriptions do
   alias Framelens.Subscriptions.Follow
   alias Framelens.Creators.{Creator, CreatorPlatform}
 
-  def youtube_platforms_for_user(user_id) do
+  @platform_modules %{
+    "youtube" => Framelens.Platform.YouTube
+  }
+
+  def platforms_for_user(user_id) do
     Repo.all(
       from f in Follow,
         join: c in Creator, on: c.id == f.creator_id,
         join: p in CreatorPlatform, on: p.creator_id == c.id,
-        where: f.user_id == ^user_id and p.platform == "youtube",
-        select: %{youtube_id: p.platform_id, name: c.name}
+        where: f.user_id == ^user_id,
+        select: %{platform: p.platform, platform_id: p.platform_id, name: c.name}
     )
-  end
-
-  def get_all_content(%{youtube_id: youtube_id}) do
-    youtube_rss_url = "https://www.youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
-    with {:ok, youtube_feed} <- ElixirRss.fetch_and_parse(youtube_rss_url) do
-      %{title: title} = youtube_feed
-      {:ok, Enum.map(youtube_feed.entries, &Map.put(&1, :author, title))}
-    end
+    |> Enum.flat_map(fn %{platform: key, platform_id: id, name: name} ->
+      case Map.fetch(@platform_modules, key) do
+        {:ok, mod} -> [struct(mod, platform_id: id, name: name)]
+        :error -> []
+      end
+    end)
   end
 
   @doc """

@@ -1,9 +1,9 @@
 defmodule Framelens.Scraper do
-  alias Framelens.Subscriptions
+  alias Framelens.Platform
 
-  def sync(channels) do
-    channels
-    |> Enum.map(&Subscriptions.get_all_content/1)
+  def sync(platforms) do
+    platforms
+    |> Enum.map(&Platform.fetch_content/1)
     |> Enum.flat_map(fn
       {:ok, entries} -> entries
       _ -> []

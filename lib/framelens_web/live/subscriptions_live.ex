@@ -45,7 +45,7 @@ defmodule FramelensWeb.SubscriptionsLive do
   end
 
   def handle_event("add_new", %{"creator" => params}, socket) do
-    changeset = validate_new_creator(params)
+    changeset = build_changeset(params)
 
     if changeset.valid? do
       %{name: name, youtube_id: youtube_id} = Changeset.apply_changes(changeset)
@@ -64,24 +64,25 @@ defmodule FramelensWeb.SubscriptionsLive do
           {:noreply, put_flash(socket, :error, "Something went wrong. Please try again.")}
       end
     else
-      {:noreply, assign(socket, :new_form, Map.put(changeset, :action, :validate))}
+      {:noreply, assign(socket, :new_form, changeset |> Map.put(:action, :validate) |> to_form(as: "creator"))}
     end
   end
 
   defp new_creator_form do
-    {%{}, %{name: :string, youtube_id: :string}}
-    |> Changeset.cast(%{}, [:name, :youtube_id])
-    |> to_form(as: "creator")
+    build_changeset(%{}) |> to_form(as: "creator")
   end
 
   defp validate_new_creator(params) do
+    build_changeset(params) |> to_form(as: "creator")
+  end
+
+  defp build_changeset(params) do
     {%{}, %{name: :string, youtube_id: :string}}
     |> Changeset.cast(params, [:name, :youtube_id])
     |> Changeset.validate_required([:name, :youtube_id])
     |> Changeset.validate_format(:youtube_id, ~r/^UC[a-zA-Z0-9_-]{22}$/,
       message: "must be a valid YouTube channel ID (starts with UC)"
     )
-    |> to_form(as: "creator")
   end
 
   def render(assigns) do

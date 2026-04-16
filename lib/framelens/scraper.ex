@@ -1,13 +1,22 @@
 defmodule Framelens.Scraper do
-  alias Framelens.Platform
+  alias Framelens.{FeedCache, Platform}
 
   def sync(platforms) do
-    platforms
-    |> Enum.map(&Platform.fetch_content/1)
-    |> Enum.flat_map(fn
-      {:ok, entries} -> entries
-      _ -> []
-    end)
+    entries_by_creator =
+      platforms
+      |> Enum.map(fn platform ->
+        case Platform.fetch_content(platform) do
+          {:ok, entries} -> {platform.name, entries}
+          _ -> {platform.name, []}
+        end
+      end)
+      |> Map.new()
+
+    FeedCache.put(entries_by_creator)
+
+    entries_by_creator
+    |> Map.values()
+    |> List.flatten()
     |> Enum.sort_by(& &1.updated, {:desc, Date})
     |> Enum.slice(0, 20)
   end

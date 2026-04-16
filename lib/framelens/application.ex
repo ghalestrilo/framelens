@@ -12,6 +12,7 @@ defmodule Framelens.Application do
       Framelens.Repo,
       {DNSCluster, query: Application.get_env(:framelens, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Framelens.PubSub},
+      Framelens.FeedCache,
       # Start a worker by calling: Framelens.Worker.start_link(arg)
       # {Framelens.Worker, arg},
       # Start to serve requests, typically the last entry

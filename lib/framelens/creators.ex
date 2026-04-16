@@ -21,6 +21,11 @@ defmodule Framelens.Creators do
     Repo.all(Creator)
   end
 
+  def search_creators(query) do
+    term = "%#{query}%"
+    Repo.all(from c in Creator, where: ilike(c.name, ^term), order_by: c.name, limit: 10)
+  end
+
   @doc """
   Gets a single creator.
 

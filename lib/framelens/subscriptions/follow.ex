@@ -13,7 +13,7 @@ defmodule Framelens.Subscriptions.Follow do
   @doc false
   def changeset(follow, attrs) do
     follow
-    |> cast(attrs, [])
-    |> validate_required([])
+    |> cast(attrs, [:user_id, :creator_id])
+    |> validate_required([:user_id, :creator_id])
   end
 end

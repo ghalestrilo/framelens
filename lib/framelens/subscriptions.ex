@@ -98,6 +98,49 @@ defmodule Framelens.Subscriptions do
   alias Framelens.Subscriptions.Follow
   alias Framelens.Creators.{Creator, CreatorPlatform}
 
+  def followed_creators_for_user(user_id) do
+    Repo.all(
+      from f in Follow,
+        join: c in Creator, on: c.id == f.creator_id,
+        where: f.user_id == ^user_id,
+        select: %{id: c.id, name: c.name, follow_id: f.id}
+    )
+  end
+
+  def subscribe_new_creator(user_id, name, youtube_id) do
+    case Repo.get_by(CreatorPlatform, platform: "youtube", platform_id: youtube_id) do
+      %CreatorPlatform{creator_id: creator_id} ->
+        follow_creator(user_id, creator_id)
+
+      nil ->
+        Repo.transaction(fn ->
+          creator = Repo.insert!(%Framelens.Creators.Creator{name: name})
+
+          Repo.insert!(%CreatorPlatform{
+            creator_id: creator.id,
+            platform: "youtube",
+            platform_id: youtube_id
+          })
+
+          {:ok, follow} = follow_creator(user_id, creator.id)
+          follow
+        end)
+    end
+  end
+
+  def follow_creator(user_id, creator_id) do
+    %Follow{}
+    |> Follow.changeset(%{user_id: user_id, creator_id: creator_id})
+    |> Repo.insert(on_conflict: :nothing, conflict_target: [:user_id, :creator_id])
+  end
+
+  def unfollow_creator(user_id, creator_id) do
+    case Repo.get_by(Follow, user_id: user_id, creator_id: creator_id) do
+      nil -> {:ok, nil}
+      follow -> Repo.delete(follow)
+    end
+  end
+
   @platform_modules %{
     "youtube" => Framelens.Platform.YouTube
   }

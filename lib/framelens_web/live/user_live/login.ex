@@ -5,6 +5,7 @@ defmodule FramelensWeb.UserLive.Login do
 
   @impl true
   def render(assigns) do
+    show_password_login = false
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm space-y-4">
@@ -57,10 +58,9 @@ defmodule FramelensWeb.UserLive.Login do
           </.button>
         </.form>
 
-        <div class="divider">or</div>
-
         <.form
           :let={f}
+          :if={show_password_login}
           for={@form}
           id="login_form_password"
           action={~p"/users/log-in"}

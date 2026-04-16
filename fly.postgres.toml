@@ -1,0 +1,30 @@
+app = 'framelens-db'                                                                                
+primary_region = 'gru'
+
+[build]
+  image = 'postgres:16-alpine'
+                                                                                                    
+[env]
+  POSTGRES_USER = 'framelens'                                                                       
+  POSTGRES_DB   = 'framelens_prod'
+  PGDATA        = '/data/pgdata'                                                                    
+
+[[mounts]]                                                                                          
+  source      = 'pg_data'
+  destination = '/data'                                                                             
+
+[[vm]]                                 
+  memory   = '256mb'
+  cpu_kind = 'shared'
+  cpus     = 1
+
+[http_service]                                                                                      
+  # Postgres is not HTTP — disable the HTTP service
+  # Instead expose the TCP port via a private network                                               
+                                                                                                    
+[[services]]                                                                                        
+  protocol = 'tcp'                                                                                  
+  internal_port = 5432                                                                              
+              
+[[services.ports]]
+  port = 5432

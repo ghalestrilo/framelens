@@ -9,7 +9,7 @@ defmodule Framelens.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Framelens", "contact@example.com"})
+      |> from({"Framelens", "contact@framelens.fly.dev"})
       |> subject(subject)
       |> text_body(body)
 

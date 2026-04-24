@@ -1,22 +1,26 @@
 defmodule FramelensWeb.FeedLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.{FeedCache, Scraper, Subscriptions}
+  alias Framelens.FeedCache
+  alias Framelens.Jobs.SyncFeedJob
 
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope && socket.assigns.current_scope.user.id
 
+    if user_id && connected?(socket) do
+      Phoenix.PubSub.subscribe(Framelens.PubSub, "feed:#{user_id}")
+    end
+
     case user_id && FeedCache.get(user_id) do
       nil when not is_nil(user_id) ->
-        send(self(), :do_sync)
-        {:ok, assign(socket, videos: [], syncing: true, user_id: user_id)}
+        if connected?(socket), do: enqueue_sync(user_id)
+        {:ok, assign(socket, videos: [], syncing: true, pending_count: nil, user_id: user_id)}
 
       videos when is_list(videos) ->
-        {:ok, assign(socket, videos: videos, syncing: false, user_id: user_id)}
+        {:ok, assign(socket, videos: videos, syncing: false, pending_count: nil, user_id: user_id)}
 
       _ ->
-        # anonymous user or no cache
-        {:ok, assign(socket, videos: [], syncing: false, user_id: nil)}
+        {:ok, assign(socket, videos: [], syncing: false, pending_count: nil, user_id: nil)}
     end
   end
 
@@ -25,14 +29,27 @@ defmodule FramelensWeb.FeedLive do
   end
 
   def handle_event("sync", _params, socket) do
-    send(self(), :do_sync)
-    {:noreply, assign(socket, syncing: true)}
+    enqueue_sync(socket.assigns.user_id)
+    {:noreply, assign(socket, syncing: true, pending_count: nil)}
   end
 
-  def handle_info(:do_sync, socket) do
-    user_id = socket.assigns.user_id
-    channels = Subscriptions.platforms_for_user(user_id)
-    videos = Scraper.sync(channels)
-    {:noreply, assign(socket, videos: videos, syncing: false)}
+  def handle_info({:sync_started, _user_id, 0}, socket) do
+    {:noreply, assign(socket, syncing: false, pending_count: 0)}
+  end
+
+  def handle_info({:sync_started, _user_id, count}, socket) do
+    {:noreply, assign(socket, pending_count: count)}
+  end
+
+  def handle_info({:creator_fetched, user_id, _name}, socket) do
+    videos = FeedCache.get(user_id) || []
+    new_pending = max((socket.assigns.pending_count || 1) - 1, 0)
+    {:noreply, assign(socket, videos: videos, syncing: new_pending > 0, pending_count: new_pending)}
+  end
+
+  defp enqueue_sync(user_id) do
+    %{"user_id" => user_id}
+    |> SyncFeedJob.new()
+    |> Oban.insert()
   end
 end

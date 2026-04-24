@@ -79,9 +79,6 @@
         <p>
           I don't want my data going places I shudder to imagine.
         </p>
-        <p>
-          I'm building frameless for myself. You're free to come along. If you do, please consider dropping a coffee, or subscribing via patreon. The whole point of this project is not to depend on private funding.
-        </p>
       </div>
     </div>
   </div>
@@ -91,16 +88,45 @@
     <div class="mx-auto max-w-2xl text-center">
       <h2 class="text-3xl font-bold mb-4">Support the project</h2>
       <p class="text-base-content/60 mb-8 max-w-lg mx-auto">
-        Framelens is free to use and built in spare time. If it saves you time or makes your media diet healthier, consider supporting it to keep the servers running and development going.
+          I'm building frameless for myself. You're free to come along. If you do, please consider dropping a coffee, or subscribing via patreon. The whole point of this project is not to depend on private funding.
       </p>
-      <a
-        href="https://buymeacoffee.com/ghalestrilo"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="btn btn-secondary btn-lg"
-      >
-        ☕ Buy me a coffee
-      </a>
+      <div class="flex gap-4 flex-wrap justify-center">
+        <a
+          href="https://buymeacoffee.com/ghalestrilo"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-secondary btn-lg"
+        >
+          ☕ Buy me a coffee
+        </a>
+        <a
+          href="https://www.patreon.com/profile/creators?u=39249843"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-secondary btn-lg"
+        >
+          🎗 Support on Patreon
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Roadmap --%>
+  <div class="px-4 py-20">
+    <div class="mx-auto max-w-2xl">
+      <h2 class="text-3xl font-bold text-center mb-4">Roadmap</h2>
+      <p class="text-base-content/50 text-center mb-10">What's coming next</p>
+      <ul class="space-y-4">
+        <%= Enum.map(@roadmap, fn {icon, title, description} -> %>
+          <li class="flex items-start gap-4">
+            <span class="text-2xl mt-0.5"><%= icon %></span>
+            <div>
+              <h3 class="font-semibold"><%= title %></h3>
+              <p class="text-base-content/60 text-sm"><%= description %></p>
+            </div>
+          </li>
+        <% end) %>
+      </ul>
     </div>
   </div>
 

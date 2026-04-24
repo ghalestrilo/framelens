@@ -1,0 +1,111 @@
+<Layouts.flash_group flash={@flash} />
+
+<%!-- Hero --%>
+<div class="min-h-screen flex flex-col">
+  <div class="flex-1 flex flex-col items-center justify-center px-4 py-24 text-center">
+    <h1 class="text-5xl sm:text-7xl font-black tracking-tight mb-6">
+      Frame<span class="text-primary">lens</span>
+    </h1>
+    <p class="text-xl sm:text-2xl text-base-content/70 max-w-2xl mb-4">
+      All content, zero noise
+    </p>
+    <p class="text-base text-base-content/50 max-w-xl mb-10">
+      Framelens pulls the latest content by your favorite creators from whichever available sources in a simple and discoverable interface.
+      
+      
+      <%# videos from your subscriptions across every platform and shows them in a single,
+      chronological list. No recommendations. No ads. No rabbit holes. %>
+    </p>
+    <div class="flex gap-4 flex-wrap justify-center">
+      <.link href={~p"/users/register"} class="btn btn-primary btn-lg">
+        Use it — it's free
+      </.link>
+    </div>
+  </div>
+
+  <%!-- How it works --%>
+  <div class="border-t border-base-300 bg-base-200/50 px-4 py-20">
+    <div class="mx-auto max-w-4xl">
+      <h2 class="text-3xl font-bold text-center mb-12">How?</h2>
+      <div class="grid sm:grid-cols-3 gap-10 text-center">
+        <div>
+          <div class="text-4xl mb-4">📺</div>
+          <h3 class="font-semibold text-lg mb-2">Add your subscriptions</h3>
+          <p class="text-base-content/60 text-sm">
+            Search for creators and subscribe to their feeds. If missing, add them yourself and help the community in the process.
+          </p>
+        </div>
+        <div>
+          <div class="text-4xl mb-4">🔄</div>
+          <h3 class="font-semibold text-lg mb-2">Sync content</h3>
+          <p class="text-base-content/60 text-sm">
+            Hit Sync to fetch the latest content from all available platforms.
+          </p>
+        </div>
+        <div>
+          <div class="text-4xl mb-4">🎯</div>
+          <h3 class="font-semibold text-lg mb-2">Customize your feed</h3>
+          <p class="text-base-content/60 text-sm">
+            Filter content by the platforms which are actually relevant to you
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Why it exists --%>
+  <div class="px-4 py-20">
+    <div class="mx-auto max-w-2xl">
+      <h2 class="text-3xl font-bold text-center mb-8">Why?</h2>
+      <div class="prose prose-base max-w-none text-base-content/70 space-y-4">
+        <p>
+          Because the internet is fucking shit. I made Framelens to be able to make sense of it.
+        </p>
+        <p>
+          I don't want ugly clickbaity thumbnails jumping at my face.
+        </p>
+        <p>
+          I don't want to spend hours lost in short video rabbit holes.
+        </p>
+        <p>
+          I don't want to get shown ads just to be able to know what my favorite creators are up to.
+        </p>
+        <p>
+          I don't want to depend on content feeds I can't explain, customize or understand.
+        </p>
+        <p>
+          I don't want to completely wreck my dopamine receptors.
+        </p>
+        <p>
+          I don't want my data going places I shudder to imagine.
+        </p>
+        <p>
+          I'm building frameless for myself. You're free to come along. If you do, please consider dropping a coffee, or subscribing via patreon. The whole point of this project is not to depend on private funding.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <%!-- Support --%>
+  <div class="border-t border-base-300 bg-base-200/50 px-4 py-20">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-3xl font-bold mb-4">Support the project</h2>
+      <p class="text-base-content/60 mb-8 max-w-lg mx-auto">
+        Framelens is free to use and built in spare time. If it saves you time or makes your media diet healthier, consider supporting it to keep the servers running and development going.
+      </p>
+      <a
+        href="https://buymeacoffee.com/ghalestrilo"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-secondary btn-lg"
+      >
+        ☕ Buy me a coffee
+      </a>
+    </div>
+  </div>
+
+  <%!-- Footer --%>
+  <footer class="border-t border-base-300 px-4 py-6 text-center text-base-content/40 text-sm">
+    Framelens · Built with Phoenix &amp; Elixir
+  </footer>
+</div>

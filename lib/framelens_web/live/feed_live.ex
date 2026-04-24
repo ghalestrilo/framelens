@@ -1,4 +1,4 @@
-defmodule FramelensWeb.PageLive do
+defmodule FramelensWeb.FeedLive do
   use FramelensWeb, :live_view
 
   alias Framelens.{FeedCache, Scraper, Subscriptions}

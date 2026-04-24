@@ -2,7 +2,7 @@
 elixir = "1.18"
 
 [env]
-_.file = ".env"
+_.file = ".envrc"
 
 [tasks."dev:db"]
 description = "Start the database"

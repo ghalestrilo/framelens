@@ -20,6 +20,9 @@ if System.get_env("PHX_SERVER") do
   config :framelens, FramelensWeb.Endpoint, server: true
 end
 
+rsshub_url = System.get_env("RSSHUB_URL") || "http://localhost:1200"
+config :framelens, :rsshub_url, rsshub_url
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -7,7 +7,7 @@ defmodule Framelens.Scraper do
       |> Enum.map(fn platform ->
         case Platform.fetch_content(platform) do
           {:ok, entries} -> {platform.name, entries}
-          _ -> {platform.name, []}
+          _error -> {platform.name, []}
         end
       end)
       |> Map.new()

@@ -1,7 +1,7 @@
 defmodule FramelensWeb.FeedLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.FeedCache
+  alias Framelens.{FeedCache, Subscriptions}
   alias Framelens.Jobs.SyncFeedJob
 
   def mount(_params, _session, socket) do
@@ -9,6 +9,11 @@ defmodule FramelensWeb.FeedLive do
 
     if user_id && connected?(socket) do
       Phoenix.PubSub.subscribe(Framelens.PubSub, "feed:#{user_id}")
+
+      Subscriptions.followed_creators_for_user(user_id)
+      |> Enum.each(fn %{name: name} ->
+        Phoenix.PubSub.subscribe(Framelens.PubSub, "creator:#{name}")
+      end)
     end
 
     case user_id && FeedCache.get(user_id) do
@@ -41,9 +46,9 @@ defmodule FramelensWeb.FeedLive do
     {:noreply, assign(socket, pending_count: count)}
   end
 
-  def handle_info({:creator_fetched, user_id, _name}, socket) do
-    videos = FeedCache.get(user_id) || []
-    new_pending = max((socket.assigns.pending_count || 1) - 1, 0)
+  def handle_info({:creator_fetched, _name}, socket) do
+    videos = FeedCache.get(socket.assigns.user_id) || []
+    new_pending = max((socket.assigns.pending_count || 0) - 1, 0)
     {:noreply, assign(socket, videos: videos, syncing: new_pending > 0, pending_count: new_pending)}
   end
 

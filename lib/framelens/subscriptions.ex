@@ -153,7 +153,22 @@ defmodule Framelens.Subscriptions do
         where: f.user_id == ^user_id,
         select: %{platform: p.platform, platform_id: p.platform_id, name: c.name}
     )
-    |> Enum.flat_map(fn %{platform: key, platform_id: id, name: name} ->
+    |> build_platform_structs()
+  end
+
+  def all_followed_creator_platforms do
+    Repo.all(
+      from p in CreatorPlatform,
+        join: c in Creator, on: c.id == p.creator_id,
+        join: f in Follow, on: f.creator_id == c.id,
+        distinct: p.id,
+        select: %{platform: p.platform, platform_id: p.platform_id, name: c.name}
+    )
+    |> build_platform_structs()
+  end
+
+  defp build_platform_structs(rows) do
+    Enum.flat_map(rows, fn %{platform: key, platform_id: id, name: name} ->
       case Map.fetch(@platform_modules, key) do
         {:ok, mod} -> [struct(mod, platform_id: id, name: name)]
         :error -> []

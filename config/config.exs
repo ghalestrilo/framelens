@@ -75,7 +75,8 @@ config :phoenix, :json_library, Jason
 
 config :framelens, Oban,
   repo: Framelens.Repo,
-  queues: [feeds: 10]
+  queues: [feeds: 10],
+  plugins: [{Oban.Plugins.Cron, crontab: [{"*/30 * * * *", Framelens.Jobs.ScheduledSyncJob}]}]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

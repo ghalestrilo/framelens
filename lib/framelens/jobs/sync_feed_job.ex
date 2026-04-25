@@ -20,11 +20,8 @@ defmodule Framelens.Jobs.SyncFeedJob do
     Phoenix.PubSub.broadcast(Framelens.PubSub, "feed:#{user_id}", {:sync_started, user_id, platform_count})
 
     Enum.each(platforms, fn platform ->
-      platform_key = Map.fetch!(@module_to_key, platform.__struct__)
-
       %{
-        "user_id"     => user_id,
-        "platform"    => platform_key,
+        "platform"    => Map.fetch!(@module_to_key, platform.__struct__),
         "platform_id" => platform.platform_id,
         "name"        => platform.name
       }

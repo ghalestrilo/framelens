@@ -12,14 +12,14 @@ defmodule Framelens.Jobs.FetchCreatorFeedJob do
   }
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"user_id" => user_id, "platform" => platform_key, "platform_id" => platform_id, "name" => name}}) do
+  def perform(%Oban.Job{args: %{"platform" => platform_key, "platform_id" => platform_id, "name" => name}}) do
     mod = Map.fetch!(@platform_modules, platform_key)
     platform = struct(mod, platform_id: platform_id, name: name)
 
     case Platform.fetch_content(platform) do
       {:ok, entries} ->
         FeedCache.put(%{name => entries})
-        Phoenix.PubSub.broadcast(Framelens.PubSub, "feed:#{user_id}", {:creator_fetched, user_id, name})
+        Phoenix.PubSub.broadcast(Framelens.PubSub, "creator:#{name}", {:creator_fetched, name})
         :ok
 
       {:error, reason} ->

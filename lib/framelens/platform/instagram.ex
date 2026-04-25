@@ -13,5 +13,3 @@ defimpl Framelens.Platform, for: Framelens.Platform.Instagram do
     end
   end
 end
-
-# Req.get!("http://localhost:1200/picnob/user/")

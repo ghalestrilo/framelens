@@ -1,5 +1,6 @@
 defmodule FramelensWeb.Admin.CreatorLive do
   use Backpex.LiveResource,
+    per_page_default: 50,
     adapter_config: [
       schema: Framelens.Creators.Creator,
       repo: Framelens.Repo,

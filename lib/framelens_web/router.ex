@@ -45,12 +45,19 @@ defmodule FramelensWeb.Router do
   end
 
   scope "/admin", FramelensWeb do
-    pipe_through :browser
+    pipe_through [:browser, :require_authenticated_user, :require_admin]
 
     backpex_routes()
 
-    live_session :admin, on_mount: Backpex.InitAssigns do
+    live_session :admin,
+      on_mount: [
+        {FramelensWeb.UserAuth, :require_authenticated},
+        {FramelensWeb.UserAuth, :require_admin},
+        Backpex.InitAssigns
+      ] do
       live_resources "/jobs", Admin.ObanJobLive
+      live_resources "/creators", Admin.CreatorLive
+      live_resources "/creator_platforms", Admin.CreatorPlatformLive
     end
   end
 

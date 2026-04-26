@@ -32,7 +32,7 @@ defmodule Framelens.Subscriptions do
       %Subscription{}
 
   """
-  def get_subscription!(id), do: raise "TODO"
+  def get_subscription!(id), do: raise("TODO")
 
   @doc """
   Creates a subscription.
@@ -101,7 +101,8 @@ defmodule Framelens.Subscriptions do
   def followed_creators_for_user(user_id) do
     Repo.all(
       from f in Follow,
-        join: c in Creator, on: c.id == f.creator_id,
+        join: c in Creator,
+        on: c.id == f.creator_id,
         where: f.user_id == ^user_id,
         select: %{id: c.id, name: c.name, follow_id: f.id}
     )
@@ -109,13 +110,14 @@ defmodule Framelens.Subscriptions do
 
   def subscribe_new_creator(user_id, name, platforms) when is_list(platforms) do
     Repo.transaction(fn ->
-      creator = Repo.insert!(
-        %Framelens.Creators.Creator{}
-        |> Framelens.Creators.Creator.changeset_with_platforms(%{
-          name: name,
-          platforms: platforms
-        })
-      )
+      creator =
+        Repo.insert!(
+          %Framelens.Creators.Creator{}
+          |> Framelens.Creators.Creator.changeset_with_platforms(%{
+            name: name,
+            platforms: platforms
+          })
+        )
 
       {:ok, follow} = follow_creator(user_id, creator.id)
       follow
@@ -138,8 +140,10 @@ defmodule Framelens.Subscriptions do
   def platforms_for_user(user_id) do
     Repo.all(
       from f in Follow,
-        join: c in Creator, on: c.id == f.creator_id,
-        join: p in CreatorPlatform, on: p.creator_id == c.id,
+        join: c in Creator,
+        on: c.id == f.creator_id,
+        join: p in CreatorPlatform,
+        on: p.creator_id == c.id,
         where: f.user_id == ^user_id,
         select: %{platform: p.platform, platform_id: p.platform_id, name: c.name}
     )
@@ -149,8 +153,10 @@ defmodule Framelens.Subscriptions do
   def all_followed_creator_platforms do
     Repo.all(
       from p in CreatorPlatform,
-        join: c in Creator, on: c.id == p.creator_id,
-        join: f in Follow, on: f.creator_id == c.id,
+        join: c in Creator,
+        on: c.id == p.creator_id,
+        join: f in Follow,
+        on: f.creator_id == c.id,
         distinct: p.id,
         select: %{platform: p.platform, platform_id: p.platform_id, name: c.name}
     )
@@ -159,6 +165,7 @@ defmodule Framelens.Subscriptions do
 
   defp build_platform_structs(rows) do
     alias Framelens.Platform.Registry
+
     Enum.flat_map(rows, fn %{platform: key, platform_id: id, name: name} ->
       try do
         [struct(Registry.get_module(key), platform_id: id, name: name)]

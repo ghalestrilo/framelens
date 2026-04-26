@@ -59,8 +59,12 @@ defmodule FramelensWeb.Admin.ObanJobLive do
     ]
   end
 
+  def filters() do
+  end
+
   def changeset(job, attrs, _metadata) do
     import Ecto.Changeset
+
     job
     |> cast(attrs, [:queue, :max_attempts, :priority])
     |> validate_required([:queue])

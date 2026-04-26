@@ -5,7 +5,9 @@ defmodule Framelens.Jobs.FetchCreatorFeedJob do
   alias Framelens.Platform.Registry
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"platform" => platform_key, "platform_id" => platform_id, "name" => name}}) do
+  def perform(%Oban.Job{
+        args: %{"platform" => platform_key, "platform_id" => platform_id, "name" => name}
+      }) do
     mod = Registry.get_module(platform_key)
     platform = struct(mod, platform_id: platform_id, name: name)
 

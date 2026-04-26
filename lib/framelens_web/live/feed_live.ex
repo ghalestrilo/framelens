@@ -22,7 +22,8 @@ defmodule FramelensWeb.FeedLive do
         {:ok, assign(socket, videos: [], syncing: true, pending_count: nil, user_id: user_id)}
 
       videos when is_list(videos) ->
-        {:ok, assign(socket, videos: videos, syncing: false, pending_count: nil, user_id: user_id)}
+        {:ok,
+         assign(socket, videos: videos, syncing: false, pending_count: nil, user_id: user_id)}
 
       _ ->
         {:ok, assign(socket, videos: [], syncing: false, pending_count: nil, user_id: nil)}
@@ -49,7 +50,9 @@ defmodule FramelensWeb.FeedLive do
   def handle_info({:creator_fetched, _name}, socket) do
     videos = FeedCache.get(socket.assigns.user_id) || []
     new_pending = max((socket.assigns.pending_count || 0) - 1, 0)
-    {:noreply, assign(socket, videos: videos, syncing: new_pending > 0, pending_count: new_pending)}
+
+    {:noreply,
+     assign(socket, videos: videos, syncing: new_pending > 0, pending_count: new_pending)}
   end
 
   defp enqueue_sync(user_id) do

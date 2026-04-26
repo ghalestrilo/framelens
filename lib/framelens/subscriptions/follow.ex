@@ -3,7 +3,6 @@ defmodule Framelens.Subscriptions.Follow do
   import Ecto.Changeset
 
   schema "follows" do
-
     field :user_id, :id
     field :creator_id, :id
 

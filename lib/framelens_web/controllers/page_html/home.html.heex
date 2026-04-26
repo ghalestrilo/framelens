@@ -27,8 +27,8 @@
         <tbody>
           <%= for video <- @videos do %>
             <tr>
-              <td class="font-medium"><%= video.title %></td>
-              <td class="text-base-content/70"><%= video.author_handle %></td>
+              <td class="font-medium">{video.title}</td>
+              <td class="text-base-content/70">{video.author_handle}</td>
               <td class="text-center">
                 <%= if video.youtube do %>
                   <a

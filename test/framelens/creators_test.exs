@@ -79,7 +79,9 @@ defmodule Framelens.CreatorsTest do
     test "create_creator_platform/1 with valid data creates a creator_platform" do
       valid_attrs = %{platform: "some platform", platform_id: "some platform_id"}
 
-      assert {:ok, %CreatorPlatform{} = creator_platform} = Creators.create_creator_platform(valid_attrs)
+      assert {:ok, %CreatorPlatform{} = creator_platform} =
+               Creators.create_creator_platform(valid_attrs)
+
       assert creator_platform.platform == "some platform"
       assert creator_platform.platform_id == "some platform_id"
     end
@@ -92,21 +94,29 @@ defmodule Framelens.CreatorsTest do
       creator_platform = creator_platform_fixture()
       update_attrs = %{platform: "some updated platform", platform_id: "some updated platform_id"}
 
-      assert {:ok, %CreatorPlatform{} = creator_platform} = Creators.update_creator_platform(creator_platform, update_attrs)
+      assert {:ok, %CreatorPlatform{} = creator_platform} =
+               Creators.update_creator_platform(creator_platform, update_attrs)
+
       assert creator_platform.platform == "some updated platform"
       assert creator_platform.platform_id == "some updated platform_id"
     end
 
     test "update_creator_platform/2 with invalid data returns error changeset" do
       creator_platform = creator_platform_fixture()
-      assert {:error, %Ecto.Changeset{}} = Creators.update_creator_platform(creator_platform, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Creators.update_creator_platform(creator_platform, @invalid_attrs)
+
       assert creator_platform == Creators.get_creator_platform!(creator_platform.id)
     end
 
     test "delete_creator_platform/1 deletes the creator_platform" do
       creator_platform = creator_platform_fixture()
       assert {:ok, %CreatorPlatform{}} = Creators.delete_creator_platform(creator_platform)
-      assert_raise Ecto.NoResultsError, fn -> Creators.get_creator_platform!(creator_platform.id) end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        Creators.get_creator_platform!(creator_platform.id)
+      end
     end
 
     test "change_creator_platform/1 returns a creator_platform changeset" do

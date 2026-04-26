@@ -469,4 +469,12 @@ defmodule FramelensWeb.CoreComponents do
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
+
+  def translate_backpex({msg, opts}) do
+    if count = opts[:count] do
+      Gettext.dngettext(FramelensWeb.Gettext, "backpex", msg, msg, count, opts)
+    else
+      Gettext.dgettext(FramelensWeb.Gettext, "backpex", msg, opts)
+    end
+  end
 end

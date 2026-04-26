@@ -8,6 +8,7 @@ defimpl Framelens.Platform, for: Framelens.Platform.Facebook do
     url = "#{base}/facebook/page/#{id}"
 
     dbg(url)
+
     with {:ok, feed} <- ElixirRss.fetch_and_parse(url) do
       {:ok, Enum.map(feed.entries, &Map.put(&1, :author, name))}
     else

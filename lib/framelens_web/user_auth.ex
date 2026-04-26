@@ -275,6 +275,35 @@ defmodule FramelensWeb.UserAuth do
     end
   end
 
+  @doc """
+  Plug for routes that require the user to have the admin role.
+  """
+  def require_admin(conn, _opts) do
+    if Scope.admin?(conn.assigns[:current_scope]) do
+      conn
+    else
+      conn
+      |> put_flash(:error, "You are not authorized to access this page.")
+      |> redirect(to: ~p"/")
+      |> halt()
+    end
+  end
+
+  def on_mount(:require_admin, _params, session, socket) do
+    socket = mount_current_scope(socket, session)
+
+    if Scope.admin?(socket.assigns[:current_scope]) do
+      {:cont, socket}
+    else
+      socket =
+        socket
+        |> Phoenix.LiveView.put_flash(:error, "You are not authorized to access this page.")
+        |> Phoenix.LiveView.redirect(to: ~p"/")
+
+      {:halt, socket}
+    end
+  end
+
   defp maybe_store_return_to(%{method: "GET"} = conn) do
     put_session(conn, :user_return_to, current_path(conn))
   end

@@ -10,13 +10,17 @@ defmodule Framelens.Jobs.SyncFeedJob do
     platforms = Subscriptions.platforms_for_user(user_id)
     platform_count = length(platforms)
 
-    Phoenix.PubSub.broadcast(Framelens.PubSub, "feed:#{user_id}", {:sync_started, user_id, platform_count})
+    Phoenix.PubSub.broadcast(
+      Framelens.PubSub,
+      "feed:#{user_id}",
+      {:sync_started, user_id, platform_count}
+    )
 
     Enum.each(platforms, fn platform ->
       %{
-        "platform"    => Registry.get_name(platform.__struct__),
+        "platform" => Registry.get_name(platform.__struct__),
         "platform_id" => platform.platform_id,
-        "name"        => platform.name
+        "name" => platform.name
       }
       |> FetchCreatorFeedJob.new()
       |> Oban.insert!()

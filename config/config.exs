@@ -73,7 +73,10 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :backpex, :pubsub_server, Framelens.PubSub
+config :backpex,
+  pubsub_server: Framelens.PubSub,
+  translator_function: {FramelensWeb.CoreComponents, :translate_backpex},
+  error_translator_function: {FramelensWeb.CoreComponents, :translate_error}
 
 config :framelens, Oban,
   repo: Framelens.Repo,

@@ -10,9 +10,7 @@ defmodule Framelens.SubscriptionsFixtures do
   def subscription_fixture(attrs \\ %{}) do
     {:ok, subscription} =
       attrs
-      |> Enum.into(%{
-
-      })
+      |> Enum.into(%{})
       |> Framelens.Subscriptions.create_subscription()
 
     subscription
@@ -24,9 +22,7 @@ defmodule Framelens.SubscriptionsFixtures do
   def follow_fixture(attrs \\ %{}) do
     {:ok, follow} =
       attrs
-      |> Enum.into(%{
-
-      })
+      |> Enum.into(%{})
       |> Framelens.Subscriptions.create_follow()
 
     follow

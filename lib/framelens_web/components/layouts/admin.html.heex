@@ -19,6 +19,9 @@
     <Backpex.HTML.Layout.sidebar_item current_url={@current_url} navigate={~p"/admin/jobs"}>
       <Backpex.HTML.CoreComponents.icon name="hero-queue-list" class="size-5" /> Oban Jobs
     </Backpex.HTML.Layout.sidebar_item>
+    <Backpex.HTML.Layout.sidebar_item current_url={@current_url} navigate={~p"/admin/creators"}>
+      <Backpex.HTML.CoreComponents.icon name="hero-user" class="size-5" /> Creators
+    </Backpex.HTML.Layout.sidebar_item>
   </:sidebar>
   <Backpex.HTML.Layout.flash_messages flash={@flash} />
   {render_slot(@inner_block)}

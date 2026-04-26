@@ -10,9 +10,9 @@ defmodule Framelens.Jobs.ScheduledSyncJob do
     Subscriptions.all_followed_creator_platforms()
     |> Enum.each(fn platform ->
       %{
-        "platform"    => Registry.get_name(platform.__struct__),
+        "platform" => Registry.get_name(platform.__struct__),
         "platform_id" => platform.platform_id,
-        "name"        => platform.name
+        "name" => platform.name
       }
       |> FetchCreatorFeedJob.new()
       |> Oban.insert!()
@@ -20,5 +20,4 @@ defmodule Framelens.Jobs.ScheduledSyncJob do
 
     :ok
   end
-
 end

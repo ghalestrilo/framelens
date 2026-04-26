@@ -11,10 +11,6 @@
     </p>
     <p class="text-base text-base-content/50 max-w-xl mb-10">
       Framelens pulls the latest content by your favorite creators from whichever available sources in a simple and discoverable interface.
-      
-      
-      <%# videos from your subscriptions across every platform and shows them in a single,
-      chronological list. No recommendations. No ads. No rabbit holes. %>
     </p>
     <div class="flex gap-4 flex-wrap justify-center">
       <.link href={~p"/users/register"} class="btn btn-primary btn-lg">
@@ -88,7 +84,7 @@
     <div class="mx-auto max-w-2xl text-center">
       <h2 class="text-3xl font-bold mb-4">Support the project</h2>
       <p class="text-base-content/60 mb-8 max-w-lg mx-auto">
-          I'm building frameless for myself. You're free to come along. If you do, please consider dropping a coffee, or subscribing via patreon. The whole point of this project is not to depend on private funding.
+        I'm building frameless for myself. You're free to come along. If you do, please consider dropping a coffee, or subscribing via patreon. The whole point of this project is not to depend on private funding.
       </p>
       <div class="flex gap-4 flex-wrap justify-center">
         <a
@@ -119,10 +115,10 @@
       <ul class="space-y-4">
         <%= Enum.map(@roadmap, fn {icon, title, description} -> %>
           <li class="flex items-start gap-4">
-            <span class="text-2xl mt-0.5"><%= icon %></span>
+            <span class="text-2xl mt-0.5">{icon}</span>
             <div>
-              <h3 class="font-semibold"><%= title %></h3>
-              <p class="text-base-content/60 text-sm"><%= description %></p>
+              <h3 class="font-semibold">{title}</h3>
+              <p class="text-base-content/60 text-sm">{description}</p>
             </div>
           </li>
         <% end) %>

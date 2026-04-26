@@ -6,6 +6,7 @@ defmodule FramelensWeb.UserLive.Login do
   @impl true
   def render(assigns) do
     show_password_login = false
+
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto max-w-sm space-y-4">

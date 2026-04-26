@@ -24,12 +24,21 @@ defmodule FramelensWeb.SubscriptionsLive do
 
   def handle_event("search", %{"query" => query}, socket) do
     results = if String.trim(query) == "", do: [], else: Creators.search_creators(query)
-    {new_form, platform_ids} = if results == [] and String.trim(query) != "" do
-      {validate_new_creator(%{"name" => query}), socket.assigns.platform_ids}
-    else
-      {new_creator_form(), %{}}
-    end
-    {:noreply, assign(socket, search: query, results: results, new_form: new_form, platform_ids: platform_ids)}
+
+    {new_form, platform_ids} =
+      if results == [] and String.trim(query) != "" do
+        {validate_new_creator(%{"name" => query}), socket.assigns.platform_ids}
+      else
+        {new_creator_form(), %{}}
+      end
+
+    {:noreply,
+     assign(socket,
+       search: query,
+       results: results,
+       new_form: new_form,
+       platform_ids: platform_ids
+     )}
   end
 
   def handle_event("follow", %{"id" => creator_id}, socket) do
@@ -46,7 +55,11 @@ defmodule FramelensWeb.SubscriptionsLive do
 
   def handle_event("validate_new", %{"creator" => params}, socket) do
     platform_ids = Map.get(params, "platform_ids", %{})
-    {:noreply, socket |> assign(:platform_ids, platform_ids) |> assign(:new_form, validate_new_creator(params))}
+
+    {:noreply,
+     socket
+     |> assign(:platform_ids, platform_ids)
+     |> assign(:new_form, validate_new_creator(params))}
   end
 
   def handle_event("add_new", %{"creator" => params}, socket) do
@@ -70,7 +83,12 @@ defmodule FramelensWeb.SubscriptionsLive do
           {:noreply, put_flash(socket, :error, "Something went wrong. Please try again.")}
       end
     else
-      {:noreply, assign(socket, :new_form, changeset |> Map.put(:action, :validate) |> to_form(as: "creator"))}
+      {:noreply,
+       assign(
+         socket,
+         :new_form,
+         changeset |> Map.put(:action, :validate) |> to_form(as: "creator")
+       )}
     end
   end
 
@@ -184,7 +202,9 @@ defmodule FramelensWeb.SubscriptionsLive do
             <.input field={@new_form[:name]} label="Name" placeholder="e.g. Fireship" />
 
             <fieldset class="space-y-2">
-              <legend class="text-sm font-medium">Platforms <span class="text-base-content/50 font-normal">(fill in at least one)</span></legend>
+              <legend class="text-sm font-medium">
+                Platforms <span class="text-base-content/50 font-normal">(fill in at least one)</span>
+              </legend>
               <div :for={{key, meta} <- @platforms} class="flex items-center gap-2">
                 <label class="w-24 text-sm text-base-content/70 shrink-0">{meta.label}</label>
                 <input

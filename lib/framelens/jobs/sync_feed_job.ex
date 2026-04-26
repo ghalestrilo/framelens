@@ -3,14 +3,7 @@ defmodule Framelens.Jobs.SyncFeedJob do
 
   alias Framelens.Subscriptions
   alias Framelens.Jobs.FetchCreatorFeedJob
-
-  @module_to_key %{
-    Framelens.Platform.YouTube   => "youtube",
-    Framelens.Platform.Facebook  => "facebook",
-    Framelens.Platform.Instagram => "instagram",
-    Framelens.Platform.TikTok    => "tiktok",
-    Framelens.Platform.Twitter   => "twitter"
-  }
+  alias Framelens.Platform.Registry
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"user_id" => user_id}}) do
@@ -21,7 +14,7 @@ defmodule Framelens.Jobs.SyncFeedJob do
 
     Enum.each(platforms, fn platform ->
       %{
-        "platform"    => Map.fetch!(@module_to_key, platform.__struct__),
+        "platform"    => Registry.get_name(platform.__struct__),
         "platform_id" => platform.platform_id,
         "name"        => platform.name
       }

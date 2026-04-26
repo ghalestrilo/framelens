@@ -5,7 +5,8 @@ defmodule Framelens.Creators.CreatorPlatform do
   schema "creator_platforms" do
     field :platform, :string
     field :platform_id, :string
-    field :creator_id, :id
+
+    belongs_to :creator, Framelens.Creators.Creator
 
     timestamps(type: :utc_datetime)
   end

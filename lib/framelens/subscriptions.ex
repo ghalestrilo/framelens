@@ -107,25 +107,19 @@ defmodule Framelens.Subscriptions do
     )
   end
 
-  def subscribe_new_creator(user_id, name, youtube_id) do
-    case Repo.get_by(CreatorPlatform, platform: "youtube", platform_id: youtube_id) do
-      %CreatorPlatform{creator_id: creator_id} ->
-        follow_creator(user_id, creator_id)
+  def subscribe_new_creator(user_id, name, platforms) when is_list(platforms) do
+    Repo.transaction(fn ->
+      creator = Repo.insert!(
+        %Framelens.Creators.Creator{}
+        |> Framelens.Creators.Creator.changeset_with_platforms(%{
+          name: name,
+          platforms: platforms
+        })
+      )
 
-      nil ->
-        Repo.transaction(fn ->
-          creator = Repo.insert!(%Framelens.Creators.Creator{name: name})
-
-          Repo.insert!(%CreatorPlatform{
-            creator_id: creator.id,
-            platform: "youtube",
-            platform_id: youtube_id
-          })
-
-          {:ok, follow} = follow_creator(user_id, creator.id)
-          follow
-        end)
-    end
+      {:ok, follow} = follow_creator(user_id, creator.id)
+      follow
+    end)
   end
 
   def follow_creator(user_id, creator_id) do
@@ -140,10 +134,6 @@ defmodule Framelens.Subscriptions do
       follow -> Repo.delete(follow)
     end
   end
-
-  @platform_modules %{
-    "youtube" => Framelens.Platform.YouTube
-  }
 
   def platforms_for_user(user_id) do
     Repo.all(
@@ -168,10 +158,12 @@ defmodule Framelens.Subscriptions do
   end
 
   defp build_platform_structs(rows) do
+    alias Framelens.Platform.Registry
     Enum.flat_map(rows, fn %{platform: key, platform_id: id, name: name} ->
-      case Map.fetch(@platform_modules, key) do
-        {:ok, mod} -> [struct(mod, platform_id: id, name: name)]
-        :error -> []
+      try do
+        [struct(Registry.get_module(key), platform_id: id, name: name)]
+      rescue
+        KeyError -> []
       end
     end)
   end

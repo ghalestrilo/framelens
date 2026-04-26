@@ -12,7 +12,7 @@
 
 # url not necessary
 youtube_channels = [
-  %{youtube_id: "UC--VosYH0BHISbb4SFO9rQA", name: "Zheanna Erose"},
+  %{instagram_id: "digital.harmonic", youtube_id: "UC--VosYH0BHISbb4SFO9rQA", name: "Zheanna Erose"},
   %{youtube_id: "UC-2LWDrIxHOd2mnt1RHbzrg", name: "Olivia Jack"},
   %{youtube_id: "UC-8QAzbLcRglXeN_MY9blyw", name: "Ben Awad"},
   %{youtube_id: "UC-8Uff7i2h5qtIvjXJDJqYA", name: "Minhas Plantas"},

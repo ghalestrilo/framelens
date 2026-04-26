@@ -2,7 +2,10 @@ defmodule FramelensWeb.SubscriptionsLive do
   use FramelensWeb, :live_view
 
   alias Framelens.{Creators, Subscriptions}
+  alias Framelens.Platform.Registry
   alias Ecto.Changeset
+
+  @platforms Registry.all()
 
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope.user.id
@@ -13,6 +16,7 @@ defmodule FramelensWeb.SubscriptionsLive do
       |> assign(:followed, Subscriptions.followed_creators_for_user(user_id))
       |> assign(:search, "")
       |> assign(:results, [])
+      |> assign(:platform_ids, %{})
       |> assign(:new_form, new_creator_form())
 
     {:ok, socket}
@@ -20,12 +24,12 @@ defmodule FramelensWeb.SubscriptionsLive do
 
   def handle_event("search", %{"query" => query}, socket) do
     results = if String.trim(query) == "", do: [], else: Creators.search_creators(query)
-    new_form = if results == [] and String.trim(query) != "" do
-      validate_new_creator(%{"name" => query, "youtube_id" => ""})
+    {new_form, platform_ids} = if results == [] and String.trim(query) != "" do
+      {validate_new_creator(%{"name" => query}), socket.assigns.platform_ids}
     else
-      new_creator_form()
+      {new_creator_form(), %{}}
     end
-    {:noreply, assign(socket, search: query, results: results, new_form: new_form)}
+    {:noreply, assign(socket, search: query, results: results, new_form: new_form, platform_ids: platform_ids)}
   end
 
   def handle_event("follow", %{"id" => creator_id}, socket) do
@@ -41,22 +45,24 @@ defmodule FramelensWeb.SubscriptionsLive do
   end
 
   def handle_event("validate_new", %{"creator" => params}, socket) do
-    {:noreply, assign(socket, :new_form, validate_new_creator(params))}
+    platform_ids = Map.get(params, "platform_ids", %{})
+    {:noreply, socket |> assign(:platform_ids, platform_ids) |> assign(:new_form, validate_new_creator(params))}
   end
 
   def handle_event("add_new", %{"creator" => params}, socket) do
     changeset = build_changeset(params)
 
     if changeset.valid? do
-      %{name: name, youtube_id: youtube_id} = Changeset.apply_changes(changeset)
+      %{name: name, platforms: platforms} = Changeset.apply_changes(changeset)
 
-      case Subscriptions.subscribe_new_creator(socket.assigns.user_id, name, youtube_id) do
+      case Subscriptions.subscribe_new_creator(socket.assigns.user_id, name, platforms) do
         {:ok, _} ->
           followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
 
           {:noreply,
            socket
            |> assign(:followed, followed)
+           |> assign(:platform_ids, %{})
            |> assign(:new_form, new_creator_form())
            |> put_flash(:info, "#{name} added and followed.")}
 
@@ -77,15 +83,32 @@ defmodule FramelensWeb.SubscriptionsLive do
   end
 
   defp build_changeset(params) do
-    {%{}, %{name: :string, youtube_id: :string}}
-    |> Changeset.cast(params, [:name, :youtube_id])
-    |> Changeset.validate_required([:name, :youtube_id])
-    |> Changeset.validate_format(:youtube_id, ~r/^UC[a-zA-Z0-9_-]{22}$/,
-      message: "must be a valid YouTube channel ID (starts with UC)"
-    )
+    platform_ids = Map.get(params, "platform_ids", %{})
+
+    filled_platforms =
+      Enum.flat_map(@platforms, fn {key, _} ->
+        case Map.get(platform_ids, key, "") do
+          "" -> []
+          id -> [%{platform: key, platform_id: String.trim(id)}]
+        end
+      end)
+
+    {%{name: nil, platforms: []}, %{name: :string, platforms: {:array, :map}}}
+    |> Changeset.cast(Map.put(params, "platforms", filled_platforms), [:name, :platforms])
+    |> Changeset.validate_required([:name])
+    |> validate_at_least_one_platform()
+  end
+
+  defp validate_at_least_one_platform(changeset) do
+    case Changeset.get_field(changeset, :platforms) do
+      [] -> Changeset.add_error(changeset, :platforms, "at least one platform ID is required")
+      _ -> changeset
+    end
   end
 
   def render(assigns) do
+    assigns = assign(assigns, :platforms, @platforms)
+
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
@@ -159,11 +182,25 @@ defmodule FramelensWeb.SubscriptionsLive do
             class="space-y-3"
           >
             <.input field={@new_form[:name]} label="Name" placeholder="e.g. Fireship" />
-            <.input
-              field={@new_form[:youtube_id]}
-              label="YouTube Channel ID"
-              placeholder="e.g. UCsBjURrPoezykLs9EqgamOA"
-            />
+
+            <fieldset class="space-y-2">
+              <legend class="text-sm font-medium">Platforms <span class="text-base-content/50 font-normal">(fill in at least one)</span></legend>
+              <div :for={{key, meta} <- @platforms} class="flex items-center gap-2">
+                <label class="w-24 text-sm text-base-content/70 shrink-0">{meta.label}</label>
+                <input
+                  type="text"
+                  name={"creator[platform_ids][#{key}]"}
+                  value={Map.get(@platform_ids, key, "")}
+                  placeholder={meta.placeholder}
+                  class="input input-bordered input-sm flex-1"
+                  phx-debounce="300"
+                />
+              </div>
+              <p :if={@new_form[:platforms].errors != []} class="text-sm text-error mt-1">
+                {translate_error(hd(@new_form[:platforms].errors))}
+              </p>
+            </fieldset>
+
             <.button variant="primary" phx-disable-with="Adding...">Add & Follow</.button>
           </.form>
         </div>

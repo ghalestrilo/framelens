@@ -19,14 +19,14 @@ defmodule FramelensWeb.FeedLive do
     case user_id && FeedCache.get(user_id) do
       nil when not is_nil(user_id) ->
         if connected?(socket), do: enqueue_sync(user_id)
-        {:ok, assign(socket, videos: [], syncing: true, pending_count: nil, user_id: user_id)}
+        {:ok, assign(socket, posts: [], syncing: true, pending_count: nil, user_id: user_id)}
 
-      videos when is_list(videos) ->
+      posts when is_list(posts) ->
         {:ok,
-         assign(socket, videos: videos, syncing: false, pending_count: nil, user_id: user_id)}
+         assign(socket, posts: posts, syncing: false, pending_count: nil, user_id: user_id)}
 
       _ ->
-        {:ok, assign(socket, videos: [], syncing: false, pending_count: nil, user_id: nil)}
+        {:ok, assign(socket, posts: [], syncing: false, pending_count: nil, user_id: nil)}
     end
   end
 
@@ -48,11 +48,11 @@ defmodule FramelensWeb.FeedLive do
   end
 
   def handle_info({:creator_fetched, _name}, socket) do
-    videos = FeedCache.get(socket.assigns.user_id) || []
+    posts = FeedCache.get(socket.assigns.user_id) || []
     new_pending = max((socket.assigns.pending_count || 0) - 1, 0)
 
     {:noreply,
-     assign(socket, videos: videos, syncing: new_pending > 0, pending_count: new_pending)}
+     assign(socket, posts: posts, syncing: new_pending > 0, pending_count: new_pending)}
   end
 
   defp enqueue_sync(user_id) do

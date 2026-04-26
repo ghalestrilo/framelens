@@ -28,19 +28,17 @@
           </tr>
         </thead>
         <tbody>
-          <%= for video <- @videos do %>
-            <%# <% dbg(video) %>
-            <%# TODO: temporarily hide non-youtube feeds %>
-            <tr :if={Map.get(video, :url, "") !== ""}>
-              <td class="text-base-content/70">{Map.get(video, :author, "")}</td>
+          <%= for post <- @posts do %>
+            <tr>
+              <td class="text-base-content/70">{Map.get(post, :author, "")}</td>
               <td class="text-base-content/70">
-                {video |> Map.get(:updated, nil) |> DateTime.to_date()}
+                {post |> Map.get(:updated, nil) |> DateTime.to_date()}
               </td>
-              <td class="font-medium">{video.title}</td>
+              <td class="font-medium">{post.title}</td>
               <td class="text-center">
-                <%= if Map.get(video, :url) do %>
+                <%= if Map.get(post, :youtube) || Map.get(post, :url) do %>
                   <a
-                    href={video.url}
+                    href={Map.get(post, :youtube) || Map.get(post, :url)}
                     target="_blank"
                     class="btn btn-sm btn-ghost hover:btn-error"
                     title="Watch on YouTube"
@@ -59,9 +57,9 @@
                 <% end %>
               </td>
               <td class="text-center">
-                <%= if Map.get(video, :facebook) do %>
+                <%= if Map.get(post, :facebook) do %>
                   <a
-                    href={video.facebook}
+                    href={post.facebook}
                     target="_blank"
                     class="btn btn-sm btn-ghost hover:btn-primary"
                     title="Watch on Facebook"
@@ -80,9 +78,9 @@
                 <% end %>
               </td>
               <td class="text-center">
-                <%= if Map.get(video, :tiktok) do %>
+                <%= if Map.get(post, :tiktok) do %>
                   <a
-                    href={video.tiktok}
+                    href={post.tiktok}
                     target="_blank"
                     class="btn btn-sm btn-ghost hover:btn-info"
                     title="Watch on TikTok"
@@ -101,9 +99,9 @@
                 <% end %>
               </td>
               <td class="text-center">
-                <%= if Map.get(video, :instagram) do %>
+                <%= if Map.get(post, :instagram) do %>
                   <a
-                    href={video.instagram}
+                    href={post.instagram}
                     target="_blank"
                     class="btn btn-sm btn-ghost hover:btn-secondary"
                     title="Watch on Instagram"

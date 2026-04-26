@@ -32,6 +32,11 @@ defmodule FramelensWeb.Admin.ObanJobLive do
       state: %{
         module: Backpex.Fields.Text,
         label: "State",
+        render: fn assigns ->
+          ~H"""
+          <span class={"px-3 rounded-2xl #{get_state_class(@item)}"}>{@item.state}</span>
+          """
+        end,
         except: [:new, :edit]
       },
       attempt: %{
@@ -96,8 +101,13 @@ defmodule FramelensWeb.Admin.ObanJobLive do
     # def options, do: [
     #   {"John Doe", "acdd1860-65ce-4ed6-a37c-433851cf68d7"},
     #   {"Jane Doe", "9d78ce5e-9334-4a6c-a076-f1e72522de2"}
-    # ]
+    #
 
     def options(_), do: Oban.Job.states() |> Enum.map(&{Atom.to_string(&1), Atom.to_string(&1)})
   end
+
+  defp get_state_class(%{ state: state }) when state == "completed", do: "text-green-300 bg-green-900/50"
+  defp get_state_class(%{ state: state }) when state in ["available",  "retryable",  "executing",  "scheduled"], do: "text-yellow-300 bg-yellow-900/50"
+  defp get_state_class(%{ state: state }) when state in ["suspended", "cancelled", "discarded"], do: "text-red-300 bg-red-900/50"
+  defp get_state_class(_), do: ""
 end

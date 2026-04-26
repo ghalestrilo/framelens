@@ -19,8 +19,6 @@ defmodule FramelensWeb.Admin.CreatorLive do
 
   @impl Backpex.LiveResource
   def fields do
-    import Ecto.Query
-
     [
       name: %{
         module: Backpex.Fields.Text,

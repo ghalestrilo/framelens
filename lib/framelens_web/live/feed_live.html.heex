@@ -29,7 +29,9 @@
         </thead>
         <tbody>
           <%= for video <- @videos do %>
-            <tr>
+            <%# <% dbg(video) %>
+            <%# TODO: temporarily hide non-youtube feeds %>
+            <tr :if={Map.get(video, :url, "") !== ""}>
               <td class="text-base-content/70">{Map.get(video, :author, "")}</td>
               <td class="text-base-content/70">
                 {video |> Map.get(:updated, nil) |> DateTime.to_date()}

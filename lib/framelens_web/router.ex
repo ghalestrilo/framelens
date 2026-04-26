@@ -2,6 +2,7 @@ defmodule FramelensWeb.Router do
   use FramelensWeb, :router
 
   import FramelensWeb.UserAuth
+  import Backpex.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -40,6 +41,16 @@ defmodule FramelensWeb.Router do
 
       live_dashboard "/dashboard", metrics: FramelensWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
+  scope "/admin", FramelensWeb do
+    pipe_through :browser
+
+    backpex_routes()
+
+    live_session :admin, on_mount: Backpex.InitAssigns do
+      live_resources "/jobs", Admin.ObanJobLive
     end
   end
 

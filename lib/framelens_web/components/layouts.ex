@@ -25,6 +25,12 @@ defmodule FramelensWeb.Layouts do
       </Layouts.app>
 
   """
+  attr :flash, :map, required: true
+  attr :fluid?, :boolean, default: true
+  attr :current_url, :string, required: true
+  slot :inner_block, required: true
+  def admin(assigns)
+
   attr :flash, :map, required: true, doc: "the map of flash messages"
 
   attr :current_scope, :map,

@@ -33,7 +33,9 @@
                   {creator.follow_count} {if creator.follow_count == 1, do: "follower", else: "followers"}
                 </span>
               </div>
-              <a href={~p"/subscriptions"} class="btn btn-sm btn-primary">Follow</a>
+              <button phx-click="follow" phx-value-id={creator.id} class="btn btn-sm btn-primary">
+                Follow
+              </button>
             </li>
           <% end %>
         </ul>

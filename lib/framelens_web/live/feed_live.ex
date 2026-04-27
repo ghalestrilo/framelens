@@ -29,7 +29,8 @@ defmodule FramelensWeb.FeedLive do
            syncing: false,
            pending_count: nil,
            user_id: user_id,
-           suggested_creators: PlatformStats.most_followed()
+           suggested_creators: PlatformStats.most_followed(),
+           first_follow_flash: false
          )}
 
       is_nil(user_id) ->
@@ -41,7 +42,8 @@ defmodule FramelensWeb.FeedLive do
            syncing: false,
            pending_count: nil,
            user_id: nil,
-           suggested_creators: []
+           suggested_creators: [],
+           first_follow_flash: false
          )}
 
       true ->
@@ -58,7 +60,7 @@ defmodule FramelensWeb.FeedLive do
         {:ok,
          socket
          |> assign(extra)
-         |> assign(syncing: syncing, pending_count: nil, user_id: user_id, suggested_creators: [])}
+         |> assign(syncing: syncing, pending_count: nil, user_id: user_id, suggested_creators: [], first_follow_flash: false)}
     end
   end
 
@@ -82,7 +84,11 @@ defmodule FramelensWeb.FeedLive do
     {:noreply,
      socket
      |> assign(paginate(all_posts, @page_size))
-     |> assign(suggested_creators: [], syncing: true, pending_count: nil)}
+     |> assign(suggested_creators: [], syncing: true, pending_count: nil, first_follow_flash: true)}
+  end
+
+  def handle_event("clear_first_follow_flash", _params, socket) do
+    {:noreply, assign(socket, first_follow_flash: false)}
   end
 
   def handle_event("sync", _params, %{assigns: %{user_id: nil}} = socket) do

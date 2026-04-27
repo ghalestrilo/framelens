@@ -1,4 +1,12 @@
 <Layouts.flash_group flash={@flash} />
+<.flash
+  :if={@first_follow_flash}
+  id="first-follow-flash"
+  kind={:success}
+  phx-click="clear_first_follow_flash"
+>
+  You've followed your first creator! Manage your follows in the <.link navigate={~p"/subscriptions"} class="font-semibold underline">Subscriptions</.link> page.
+</.flash>
 <div class="px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
   <div class="mx-auto max-w-7xl">
     <div class="mb-8 flex justify-between items-center">

@@ -4,6 +4,8 @@ defmodule FramelensWeb.FeedLive do
   alias Framelens.{FeedCache, Subscriptions}
   alias Framelens.Jobs.SyncFeedJob
 
+  @page_size 20
+
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope && socket.assigns.current_scope.user.id
 
@@ -19,15 +21,42 @@ defmodule FramelensWeb.FeedLive do
     case user_id && FeedCache.get(user_id) do
       nil when not is_nil(user_id) ->
         if connected?(socket), do: enqueue_sync(user_id)
-        {:ok, assign(socket, posts: [], syncing: true, pending_count: nil, user_id: user_id)}
 
-      posts when is_list(posts) ->
         {:ok,
-         assign(socket, posts: posts, syncing: false, pending_count: nil, user_id: user_id)}
+         assign(socket,
+           all_posts: [],
+           posts: [],
+           has_more: false,
+           syncing: true,
+           pending_count: nil,
+           user_id: user_id
+         )}
+
+      all_posts when is_list(all_posts) ->
+        {:ok, assign(socket, paginate(all_posts, @page_size)) |> assign(syncing: false, pending_count: nil, user_id: user_id)}
 
       _ ->
-        {:ok, assign(socket, posts: [], syncing: false, pending_count: nil, user_id: nil)}
+        {:ok,
+         assign(socket,
+           all_posts: [],
+           posts: [],
+           has_more: false,
+           syncing: false,
+           pending_count: nil,
+           user_id: nil
+         )}
     end
+  end
+
+  def handle_event("load_more", _params, %{assigns: %{has_more: false}} = socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("load_more", _params, socket) do
+    next_count = length(socket.assigns.posts) + @page_size
+    posts = Enum.take(socket.assigns.all_posts, next_count)
+    has_more = length(posts) < length(socket.assigns.all_posts)
+    {:noreply, assign(socket, posts: posts, has_more: has_more)}
   end
 
   def handle_event("sync", _params, %{assigns: %{user_id: nil}} = socket) do
@@ -48,11 +77,19 @@ defmodule FramelensWeb.FeedLive do
   end
 
   def handle_info({:creator_fetched, _name}, socket) do
-    posts = FeedCache.get(socket.assigns.user_id) || []
+    all_posts = FeedCache.get(socket.assigns.user_id) || []
     new_pending = max((socket.assigns.pending_count || 0) - 1, 0)
+    page_count = max(length(socket.assigns.posts), @page_size)
 
     {:noreply,
-     assign(socket, posts: posts, syncing: new_pending > 0, pending_count: new_pending)}
+     socket
+     |> assign(paginate(all_posts, page_count))
+     |> assign(syncing: new_pending > 0, pending_count: new_pending)}
+  end
+
+  defp paginate(all_posts, count) do
+    posts = Enum.take(all_posts, count)
+    %{all_posts: all_posts, posts: posts, has_more: length(posts) < length(all_posts)}
   end
 
   defp enqueue_sync(user_id) do

@@ -75,8 +75,8 @@ defmodule FramelensWeb.FeedLive do
     {:noreply, assign(socket, posts: posts, has_more: has_more)}
   end
 
-  def handle_event("follow", %{"id" => creator_id}, socket) do
-    Subscriptions.follow_creator(socket.assigns.user_id, String.to_integer(creator_id))
+  def handle_info({:feed_follow, creator_id}, socket) do
+    Subscriptions.follow_creator(socket.assigns.user_id, creator_id)
 
     all_posts = FeedCache.get(socket.assigns.user_id) || []
     enqueue_sync(socket.assigns.user_id)

@@ -1,7 +1,7 @@
 defmodule FramelensWeb.SubscriptionsLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.{Creators, Subscriptions}
+  alias Framelens.{Creators, PlatformStats, Subscriptions}
   alias Framelens.Platform.Registry
   alias Ecto.Changeset
 
@@ -10,10 +10,14 @@ defmodule FramelensWeb.SubscriptionsLive do
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope.user.id
 
+    followed = Subscriptions.followed_creators_for_user(user_id)
+
     socket =
       socket
       |> assign(:user_id, user_id)
-      |> assign(:followed, Subscriptions.followed_creators_for_user(user_id))
+      |> assign(:followed, followed)
+      |> assign(:followed_ids, followed_ids(followed))
+      |> assign(:most_followed, PlatformStats.most_followed())
       |> assign(:search, "")
       |> assign(:results, [])
       |> assign(:platform_ids, %{})
@@ -44,13 +48,25 @@ defmodule FramelensWeb.SubscriptionsLive do
   def handle_event("follow", %{"id" => creator_id}, socket) do
     Subscriptions.follow_creator(socket.assigns.user_id, String.to_integer(creator_id))
     followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
-    {:noreply, assign(socket, followed: followed)}
+    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
   end
 
   def handle_event("unfollow", %{"id" => creator_id}, socket) do
     Subscriptions.unfollow_creator(socket.assigns.user_id, String.to_integer(creator_id))
     followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
-    {:noreply, assign(socket, followed: followed)}
+    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
+  end
+
+  def handle_info({:subs_follow, creator_id}, socket) do
+    Subscriptions.follow_creator(socket.assigns.user_id, creator_id)
+    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
+    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
+  end
+
+  def handle_info({:subs_unfollow, creator_id}, socket) do
+    Subscriptions.unfollow_creator(socket.assigns.user_id, creator_id)
+    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
+    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
   end
 
   def handle_event("validate_new", %{"creator" => params}, socket) do
@@ -116,6 +132,8 @@ defmodule FramelensWeb.SubscriptionsLive do
     |> Changeset.validate_required([:name])
     |> validate_at_least_one_platform()
   end
+
+  defp followed_ids(followed), do: MapSet.new(followed, & &1.id)
 
   defp validate_at_least_one_platform(changeset) do
     case Changeset.get_field(changeset, :platforms) do
@@ -224,6 +242,22 @@ defmodule FramelensWeb.SubscriptionsLive do
             <.button variant="primary" phx-disable-with="Adding...">Add & Follow</.button>
           </.form>
         </div>
+      </div>
+
+      <div :if={@most_followed != []} class="divider" />
+
+      <div :if={@most_followed != []} class="space-y-3">
+        <h2 class="font-semibold text-sm text-base-content/60 uppercase tracking-wide">
+          Popular channels
+        </h2>
+        <.live_component
+          module={FramelensWeb.CreatorListComponent}
+          id="subs-suggestions"
+          creators={@most_followed}
+          followed_ids={@followed_ids}
+          on_follow={:subs_follow}
+          on_unfollow={:subs_unfollow}
+        />
       </div>
     </Layouts.app>
     """

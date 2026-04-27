@@ -45,7 +45,7 @@
         <a href={~p"/subscriptions"} class="btn btn-outline">Browse all channels</a>
       </div>
     <% else %>
-      <div class="overflow-x-auto rounded-lg border border-base-300" id="posts-container" phx-hook=".InfiniteScroll">
+      <div class="overflow-x-auto rounded-lg border border-base-300" id="posts-container" phx-hook="InfiniteScroll">
         <table class="table table-zebra w-full">
           <thead>
             <tr>
@@ -160,28 +160,3 @@
   </div>
 </div>
 
-<script :type={Phoenix.LiveView.ColocatedHook} name=".InfiniteScroll">
-  export default {
-    mounted() {
-      this.sentinel = this.el.querySelector("#posts-sentinel")
-      if (!this.sentinel) return
-      this.observer = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting) this.pushEvent("load_more", {})
-      })
-      this.observer.observe(this.sentinel)
-    },
-    updated() {
-      const sentinel = this.el.querySelector("#posts-sentinel")
-      if (sentinel && sentinel !== this.sentinel) {
-        if (this.sentinel) this.observer.unobserve(this.sentinel)
-        this.sentinel = sentinel
-        this.observer.observe(this.sentinel)
-      } else if (!sentinel && this.observer) {
-        this.observer.disconnect()
-      }
-    },
-    destroyed() {
-      if (this.observer) this.observer.disconnect()
-    }
-  }
-</script>

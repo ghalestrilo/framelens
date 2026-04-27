@@ -26,11 +26,35 @@ import {hooks as colocatedHooks} from "phoenix-colocated/framelens"
 import {Hooks as BackpexHooks} from "backpex"
 import topbar from "../vendor/topbar"
 
+const InfiniteScroll = {
+  mounted() {
+    this.sentinel = this.el.querySelector("[id$='-sentinel']")
+    if (!this.sentinel) return
+    this.observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) this.pushEventTo(this.el, "load_more", {})
+    })
+    this.observer.observe(this.sentinel)
+  },
+  updated() {
+    const sentinel = this.el.querySelector("[id$='-sentinel']")
+    if (sentinel && sentinel !== this.sentinel) {
+      if (this.sentinel) this.observer.unobserve(this.sentinel)
+      this.sentinel = sentinel
+      this.observer.observe(this.sentinel)
+    } else if (!sentinel && this.observer) {
+      this.observer.disconnect()
+    }
+  },
+  destroyed() {
+    if (this.observer) this.observer.disconnect()
+  }
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, ...BackpexHooks},
+  hooks: {...colocatedHooks, ...BackpexHooks, InfiniteScroll},
 })
 
 // Show progress bar on live navigation and form submits

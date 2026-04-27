@@ -45,7 +45,7 @@ defmodule FramelensWeb.CreatorListComponent do
 
   def render(assigns) do
     ~H"""
-    <div id={@id} phx-hook=".InfiniteScroll" phx-target={@myself}>
+    <div id={@id} phx-hook="InfiniteScroll" phx-target={@myself}>
       <ul class="flex flex-col gap-3 w-full">
         <li
           :for={creator <- @visible}
@@ -79,32 +79,6 @@ defmodule FramelensWeb.CreatorListComponent do
         </li>
       </ul>
       <div :if={@has_more} id={"#{@id}-sentinel"} class="h-4"></div>
-
-      <script :type={Phoenix.LiveView.ColocatedHook} name=".InfiniteScroll">
-        export default {
-          mounted() {
-            this.sentinel = this.el.querySelector(`#${this.el.id}-sentinel`)
-            if (!this.sentinel) return
-            this.observer = new IntersectionObserver(entries => {
-              if (entries[0].isIntersecting) this.pushEventTo(this.el, "load_more", {})
-            })
-            this.observer.observe(this.sentinel)
-          },
-          updated() {
-            const sentinel = this.el.querySelector(`#${this.el.id}-sentinel`)
-            if (sentinel && sentinel !== this.sentinel) {
-              if (this.sentinel) this.observer.unobserve(this.sentinel)
-              this.sentinel = sentinel
-              this.observer.observe(this.sentinel)
-            } else if (!sentinel && this.observer) {
-              this.observer.disconnect()
-            }
-          },
-          destroyed() {
-            if (this.observer) this.observer.disconnect()
-          }
-        }
-      </script>
     </div>
     """
   end

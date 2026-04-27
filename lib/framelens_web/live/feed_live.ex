@@ -29,7 +29,7 @@ defmodule FramelensWeb.FeedLive do
            syncing: false,
            pending_count: nil,
            user_id: user_id,
-           suggested_creators: PlatformStats.most_followed(),
+           suggested_creators: Enum.take(PlatformStats.most_followed(), 5),
            first_follow_flash: false
          )}
 
@@ -77,6 +77,7 @@ defmodule FramelensWeb.FeedLive do
 
   def handle_info({:feed_follow, creator_id}, socket) do
     Subscriptions.follow_creator(socket.assigns.user_id, creator_id)
+    Task.start(fn -> PlatformStats.refresh() end)
 
     all_posts = FeedCache.get(socket.assigns.user_id) || []
     enqueue_sync(socket.assigns.user_id)

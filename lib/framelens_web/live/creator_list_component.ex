@@ -1,7 +1,7 @@
 defmodule FramelensWeb.CreatorListComponent do
   use FramelensWeb, :live_component
 
-  @page_size 5
+  @page_size 10
 
   @doc """
   Renders a paginated list of creators with follow/unfollow buttons.
@@ -14,7 +14,8 @@ defmodule FramelensWeb.CreatorListComponent do
     - on_unfollow: event name to send to the parent when a creator is unfollowed
   """
   def update(assigns, socket) do
-    visible = Enum.take(assigns.creators, @page_size)
+    current_count = max(length(socket.assigns[:visible] || []), @page_size)
+    visible = Enum.take(assigns.creators, current_count)
 
     {:ok,
      socket
@@ -85,7 +86,7 @@ defmodule FramelensWeb.CreatorListComponent do
             this.sentinel = this.el.querySelector(`#${this.el.id}-sentinel`)
             if (!this.sentinel) return
             this.observer = new IntersectionObserver(entries => {
-              if (entries[0].isIntersecting) this.pushEvent("load_more", {})
+              if (entries[0].isIntersecting) this.pushEventTo(this.el, "load_more", {})
             })
             this.observer.observe(this.sentinel)
           },

@@ -11,11 +11,13 @@ defmodule Framelens.PlatformStats do
   import Ecto.Query
   alias Framelens.{Repo, Creators.Creator, Subscriptions.Follow}
 
+  @limit 100
+
   def start_link(_opts) do
     Agent.start_link(fn -> compute() end, name: __MODULE__)
   end
 
-  @doc "Returns all creators ordered by follow count descending."
+  @doc "Returns up to #{@limit} creators ordered by follow count descending."
   def most_followed do
     Agent.get(__MODULE__, & &1.most_followed)
   end
@@ -33,6 +35,7 @@ defmodule Framelens.PlatformStats do
           on: f.creator_id == c.id,
           group_by: [c.id, c.name],
           order_by: [desc: count(f.id)],
+          limit: @limit,
           select: %{id: c.id, name: c.name, follow_count: count(f.id)}
       )
 

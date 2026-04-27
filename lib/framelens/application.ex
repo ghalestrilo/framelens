@@ -13,6 +13,7 @@ defmodule Framelens.Application do
       {DNSCluster, query: Application.get_env(:framelens, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Framelens.PubSub},
       Framelens.FeedCache,
+      Framelens.PlatformStats,
       {Oban, Application.fetch_env!(:framelens, Oban)},
       FramelensWeb.Endpoint
     ]

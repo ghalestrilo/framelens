@@ -1,7 +1,7 @@
 defmodule FramelensWeb.FeedLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.{FeedCache, Subscriptions}
+  alias Framelens.{FeedCache, PlatformStats, Subscriptions}
   alias Framelens.Jobs.SyncFeedJob
 
   @page_size 20
@@ -9,33 +9,18 @@ defmodule FramelensWeb.FeedLive do
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope && socket.assigns.current_scope.user.id
 
+    followed = user_id && Subscriptions.followed_creators_for_user(user_id)
+
     if user_id && connected?(socket) do
       Phoenix.PubSub.subscribe(Framelens.PubSub, "feed:#{user_id}")
 
-      Subscriptions.followed_creators_for_user(user_id)
-      |> Enum.each(fn %{name: name} ->
+      Enum.each(followed, fn %{name: name} ->
         Phoenix.PubSub.subscribe(Framelens.PubSub, "creator:#{name}")
       end)
     end
 
-    case user_id && FeedCache.get(user_id) do
-      nil when not is_nil(user_id) ->
-        if connected?(socket), do: enqueue_sync(user_id)
-
-        {:ok,
-         assign(socket,
-           all_posts: [],
-           posts: [],
-           has_more: false,
-           syncing: true,
-           pending_count: nil,
-           user_id: user_id
-         )}
-
-      all_posts when is_list(all_posts) ->
-        {:ok, assign(socket, paginate(all_posts, @page_size)) |> assign(syncing: false, pending_count: nil, user_id: user_id)}
-
-      _ ->
+    cond do
+      is_list(followed) && followed == [] ->
         {:ok,
          assign(socket,
            all_posts: [],
@@ -43,8 +28,37 @@ defmodule FramelensWeb.FeedLive do
            has_more: false,
            syncing: false,
            pending_count: nil,
-           user_id: nil
+           user_id: user_id,
+           suggested_creators: PlatformStats.most_followed()
          )}
+
+      is_nil(user_id) ->
+        {:ok,
+         assign(socket,
+           all_posts: [],
+           posts: [],
+           has_more: false,
+           syncing: false,
+           pending_count: nil,
+           user_id: nil,
+           suggested_creators: []
+         )}
+
+      true ->
+        cached = FeedCache.get(user_id)
+
+        {extra, syncing} =
+          if is_nil(cached) do
+            if connected?(socket), do: enqueue_sync(user_id)
+            {paginate([], @page_size), true}
+          else
+            {paginate(cached, @page_size), false}
+          end
+
+        {:ok,
+         socket
+         |> assign(extra)
+         |> assign(syncing: syncing, pending_count: nil, user_id: user_id, suggested_creators: [])}
     end
   end
 

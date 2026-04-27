@@ -4,7 +4,12 @@
     <div class="mb-8 flex justify-between items-center">
       <h1 class="text-3xl font-bold">Video Library</h1>
       <div class="flex items-center gap-4">
-        <button phx-click="sync" class="btn btn-primary" disabled={@syncing}>
+        <button
+          :if={@suggested_creators == []}
+          phx-click="sync"
+          class="btn btn-primary"
+          disabled={@syncing}
+        >
           <%= if @syncing do %>
             <span class="loading loading-spinner loading-sm"></span>
           <% end %>
@@ -14,6 +19,27 @@
       </div>
     </div>
 
+    <%= if @suggested_creators != [] do %>
+      <div class="flex flex-col items-center gap-6 py-16 text-center">
+        <p class="text-lg text-base-content/70">
+          You're not following anyone yet. Here are some popular channels to get you started:
+        </p>
+        <ul class="flex flex-col gap-3 w-full max-w-sm">
+          <%= for creator <- @suggested_creators do %>
+            <li class="flex items-center justify-between rounded-lg border border-base-300 px-4 py-3 gap-4">
+              <div class="flex items-baseline justify-between flex-1">
+                <span class="font-medium">{creator.name}</span>
+                <span class="ml-2 text-sm text-base-content/50">
+                  {creator.follow_count} {if creator.follow_count == 1, do: "follower", else: "followers"}
+                </span>
+              </div>
+              <a href={~p"/subscriptions"} class="btn btn-sm btn-primary">Follow</a>
+            </li>
+          <% end %>
+        </ul>
+        <a href={~p"/subscriptions"} class="btn btn-outline">Browse all channels</a>
+      </div>
+    <% else %>
     <div class="overflow-x-auto rounded-lg border border-base-300" id="posts-container" phx-hook=".InfiniteScroll">
       <table class="table table-zebra w-full">
         <thead>
@@ -125,6 +151,7 @@
       </table>
       <div :if={@has_more} id="scroll-sentinel" class="h-4"></div>
     </div>
+    <% end %>
   </div>
 </div>
 

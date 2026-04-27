@@ -10,13 +10,10 @@ defmodule FramelensWeb.SubscriptionsLive do
   def mount(_params, _session, socket) do
     user_id = socket.assigns.current_scope.user.id
 
-    followed = Subscriptions.followed_creators_for_user(user_id)
-
     socket =
       socket
       |> assign(:user_id, user_id)
-      |> assign(:followed, followed)
-      |> assign(:followed_ids, followed_ids(followed))
+      |> assign_followed()
       |> assign(:most_followed, PlatformStats.most_followed())
       |> assign(:search, "")
       |> assign(:results, [])
@@ -46,31 +43,19 @@ defmodule FramelensWeb.SubscriptionsLive do
   end
 
   def handle_event("follow", %{"id" => creator_id}, socket) do
-    Subscriptions.follow_creator(socket.assigns.user_id, String.to_integer(creator_id))
-    Task.start(fn -> PlatformStats.refresh() end)
-    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
-    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
+    {:noreply, do_follow(socket, String.to_integer(creator_id))}
   end
 
   def handle_event("unfollow", %{"id" => creator_id}, socket) do
-    Subscriptions.unfollow_creator(socket.assigns.user_id, String.to_integer(creator_id))
-    Task.start(fn -> PlatformStats.refresh() end)
-    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
-    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
+    {:noreply, do_unfollow(socket, String.to_integer(creator_id))}
   end
 
   def handle_info({:subs_follow, creator_id}, socket) do
-    Subscriptions.follow_creator(socket.assigns.user_id, creator_id)
-    Task.start(fn -> PlatformStats.refresh() end)
-    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
-    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
+    {:noreply, do_follow(socket, creator_id)}
   end
 
   def handle_info({:subs_unfollow, creator_id}, socket) do
-    Subscriptions.unfollow_creator(socket.assigns.user_id, creator_id)
-    Task.start(fn -> PlatformStats.refresh() end)
-    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
-    {:noreply, assign(socket, followed: followed, followed_ids: followed_ids(followed))}
+    {:noreply, do_unfollow(socket, creator_id)}
   end
 
   def handle_event("validate_new", %{"creator" => params}, socket) do
@@ -137,7 +122,22 @@ defmodule FramelensWeb.SubscriptionsLive do
     |> validate_at_least_one_platform()
   end
 
-  defp followed_ids(followed), do: MapSet.new(followed, & &1.id)
+  defp do_follow(socket, creator_id) do
+    Subscriptions.follow_creator(socket.assigns.user_id, creator_id)
+    Task.start(fn -> PlatformStats.refresh() end)
+    assign_followed(socket)
+  end
+
+  defp do_unfollow(socket, creator_id) do
+    Subscriptions.unfollow_creator(socket.assigns.user_id, creator_id)
+    Task.start(fn -> PlatformStats.refresh() end)
+    assign_followed(socket)
+  end
+
+  defp assign_followed(socket) do
+    followed = Subscriptions.followed_creators_for_user(socket.assigns.user_id)
+    assign(socket, followed: followed, followed_ids: MapSet.new(followed, & &1.id))
+  end
 
   defp validate_at_least_one_platform(changeset) do
     case Changeset.get_field(changeset, :platforms) do

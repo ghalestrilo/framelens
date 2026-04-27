@@ -19,49 +19,10 @@ defmodule FramelensWeb.FeedLive do
       end)
     end
 
-    cond do
-      is_list(followed) && followed == [] ->
-        {:ok,
-         assign(socket,
-           all_posts: [],
-           posts: [],
-           has_more: false,
-           syncing: false,
-           pending_count: nil,
-           user_id: user_id,
-           suggested_creators: Enum.take(PlatformStats.most_followed(), 5),
-           first_follow_flash: false
-         )}
+    assigns = base_assigns(user_id, followed)
+    if assigns.syncing && connected?(socket), do: enqueue_sync(user_id)
 
-      is_nil(user_id) ->
-        {:ok,
-         assign(socket,
-           all_posts: [],
-           posts: [],
-           has_more: false,
-           syncing: false,
-           pending_count: nil,
-           user_id: nil,
-           suggested_creators: [],
-           first_follow_flash: false
-         )}
-
-      true ->
-        cached = FeedCache.get(user_id)
-
-        {extra, syncing} =
-          if is_nil(cached) do
-            if connected?(socket), do: enqueue_sync(user_id)
-            {paginate([], @page_size), true}
-          else
-            {paginate(cached, @page_size), false}
-          end
-
-        {:ok,
-         socket
-         |> assign(extra)
-         |> assign(syncing: syncing, pending_count: nil, user_id: user_id, suggested_creators: [], first_follow_flash: false)}
-    end
+    {:ok, assign(socket, assigns)}
   end
 
   def handle_event("load_more", _params, %{assigns: %{has_more: false}} = socket) do
@@ -118,6 +79,45 @@ defmodule FramelensWeb.FeedLive do
      socket
      |> assign(paginate(all_posts, page_count))
      |> assign(syncing: new_pending > 0, pending_count: new_pending)}
+  end
+
+  defp base_assigns(user_id, []) do
+    %{
+      all_posts: [],
+      posts: [],
+      has_more: false,
+      syncing: false,
+      pending_count: nil,
+      user_id: user_id,
+      suggested_creators: Enum.take(PlatformStats.most_followed(), 5),
+      first_follow_flash: false
+    }
+  end
+
+  defp base_assigns(nil, _followed) do
+    %{
+      all_posts: [],
+      posts: [],
+      has_more: false,
+      syncing: false,
+      pending_count: nil,
+      user_id: nil,
+      suggested_creators: [],
+      first_follow_flash: false
+    }
+  end
+
+  defp base_assigns(user_id, _followed) do
+    cached = FeedCache.get(user_id)
+
+    paginate(cached || [], @page_size)
+    |> Map.merge(%{
+      syncing: is_nil(cached),
+      pending_count: nil,
+      user_id: user_id,
+      suggested_creators: [],
+      first_follow_flash: false
+    })
   end
 
   defp paginate(all_posts, count) do

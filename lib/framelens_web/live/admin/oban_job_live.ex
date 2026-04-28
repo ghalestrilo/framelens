@@ -82,6 +82,15 @@ defmodule FramelensWeb.Admin.ObanJobLive do
   end
 
   @impl Backpex.LiveResource
+  def item_actions(default_actions) do
+    default_actions
+    |> Enum.filter(fn {name, action } -> name != :edit end)
+    |> Enum.concat([
+      retry: %{module: FramelensWeb.Admin.ObanJobLive.RetryJob, only: [:row]}
+    ])
+  end
+
+  @impl Backpex.LiveResource
   def metrics do
     [
       worker_states: %{
@@ -160,6 +169,33 @@ defmodule FramelensWeb.Admin.ObanJobLive do
   defp get_state_class(%{ state: state }) when state in ["suspended", "cancelled", "discarded"], do: "text-red-300 bg-red-900/50"
   defp get_state_class(_), do: ""
 
+  defmodule RetryJob do
+    use BackpexWeb, :item_action
+
+    @impl Backpex.ItemAction
+    def icon(assigns, _item) do
+      ~H"""
+      <Backpex.HTML.CoreComponents.icon
+        name="hero-arrow-path"
+        class="h-5 w-5 cursor-pointer transition duration-75 hover:scale-110 hover:text-yellow-500"
+      />
+      """
+    end
+
+    @impl Backpex.ItemAction
+    def label(_assigns, _item), do: "Retry"
+
+    @impl Backpex.ItemAction
+    def handle(socket, items, _params) do
+      Enum.each(items, fn job -> Oban.retry_job(job.id) end)
+
+      socket
+      |> clear_flash()
+      |> put_flash(:info, "#{length(items)} job(s) queued for retry.")
+      |> ok()
+    end
+  end
+
   defmodule WorkerStateMetric do
     @behaviour Backpex.Metric
 
@@ -222,9 +258,9 @@ defmodule FramelensWeb.Admin.ObanJobLive do
                   <a
                     :if={count > 0}
                     href={filter_url(worker, state)}
-                    class={"text-xs px-1 rounded #{state_class(state)} hover:opacity-80"}
+                    class={"text-xs px-1 rounded #{state_class(state)} hover:opacity-80 flex items-baseline justify-between w-fit min-w-22 ml-auto"}
                   >
-                    {count} <span class="opacity-60">({pct}%)</span>
+                    <span>{count}</span> <span class="opacity-60">({pct}%)</span>
                   </a>
                   <span :if={count == 0} class="text-base-content/20">—</span>
                 </td>

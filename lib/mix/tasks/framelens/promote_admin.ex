@@ -5,8 +5,6 @@ defmodule Mix.Tasks.Framelens.PromoteAdmin do
 
   @impl Mix.Task
   def run([email]) do
-    Mix.Task.run("app.start")
-
     case Framelens.Accounts.get_user_by_email(email) do
       nil ->
         Mix.shell().error("No user found with email: #{email}")

@@ -12,6 +12,13 @@ run = "docker-compose up db"
 description = "Start the Phoenix server"
 run = "mix phx.server"
 
+[tasks."remote:promote_admin"]
+description = "Promote a user to admin on the remote Fly.io machine"
+run = """
+#!/usr/bin/env bash
+fly ssh console --app framelens -C "bin/framelens rpc 'import Ecto.Changeset; Framelens.Accounts.get_user_by_email(\\\"$1\\\") |> change(role: \\\"admin\\\") |> Framelens.Repo.update!()'"
+"""
+
 [tasks.dev]
 run = [
         {tasks = ["dev:db", "dev:server"]}]

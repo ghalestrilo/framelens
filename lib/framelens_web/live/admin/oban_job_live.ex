@@ -20,14 +20,19 @@ defmodule FramelensWeb.Admin.ObanJobLive do
   @impl Backpex.LiveResource
   def fields do
     [
-      worker: %{
-        module: Backpex.Fields.Text,
-        label: "Worker",
-        except: [:new, :edit]
-      },
       queue: %{
         module: Backpex.Fields.Text,
         label: "Queue"
+      },
+      worker: %{
+        module: Backpex.Fields.Text,
+        label: "Worker",
+        except: [:new, :edit],
+        render: fn assigns ->
+          ~H"""
+          <span>{@item.worker |> String.split(".") |> List.last()}</span>
+          """
+        end,
       },
       state: %{
         module: Backpex.Fields.Text,
@@ -38,6 +43,15 @@ defmodule FramelensWeb.Admin.ObanJobLive do
           """
         end,
         except: [:new, :edit]
+      },
+      args: %{
+        module: Backpex.Fields.Text,
+        label: "Args",
+        render: fn assigns ->
+          ~H"""
+          <pre class={" #{get_state_class(@item)}"}>{inspect(@item.args)}</pre>
+          """
+        end,
       },
       attempt: %{
         module: Backpex.Fields.Number,
@@ -98,11 +112,6 @@ defmodule FramelensWeb.Admin.ObanJobLive do
     def prompt, do: "Select state ..."
 
     @impl Backpex.Filters.MultiSelect
-    # def options, do: [
-    #   {"John Doe", "acdd1860-65ce-4ed6-a37c-433851cf68d7"},
-    #   {"Jane Doe", "9d78ce5e-9334-4a6c-a076-f1e72522de2"}
-    #
-
     def options(_), do: Oban.Job.states() |> Enum.map(&{Atom.to_string(&1), Atom.to_string(&1)})
   end
 

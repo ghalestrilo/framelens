@@ -98,10 +98,13 @@ defmodule FramelensWeb.Admin.ObanJobLive do
     [
       state: %{
         module: FramelensWeb.Admin.ObanJobLive.MultiJobStateSelect,
-        label: "Tags",
-        opts: [
-          placeholder: "Selecione tags..."
-        ]
+        label: "State",
+        opts: [placeholder: "Select state..."]
+      },
+      worker: %{
+        module: FramelensWeb.Admin.ObanJobLive.WorkerFilter,
+        label: "Worker",
+        opts: [placeholder: "Select worker..."]
       }
     ]
   end
@@ -128,6 +131,28 @@ defmodule FramelensWeb.Admin.ObanJobLive do
 
     @impl Backpex.Filters.MultiSelect
     def options(_), do: Oban.Job.states() |> Enum.map(&{Atom.to_string(&1), Atom.to_string(&1)})
+  end
+
+  defmodule WorkerFilter do
+    use Backpex.Filters.MultiSelect
+
+    import Ecto.Query
+    alias Framelens.Repo
+
+    @impl Backpex.Filter
+    def can?(_), do: true
+
+    @impl Backpex.Filter
+    def label, do: "Worker"
+
+    @impl Backpex.Filters.MultiSelect
+    def prompt, do: "Select worker ..."
+
+    @impl Backpex.Filters.MultiSelect
+    def options(_) do
+      Repo.all(from j in Oban.Job, select: j.worker, distinct: true, order_by: j.worker)
+      |> Enum.map(&{String.split(&1, ".") |> List.last(), &1})
+    end
   end
 
   defp get_state_class(%{ state: state }) when state == "completed", do: "text-green-300 bg-green-900/50"
@@ -185,14 +210,22 @@ defmodule FramelensWeb.Admin.ObanJobLive do
             </thead>
             <tbody>
               <tr :for={{worker, total, by_state} <- @rows}>
-                <td class="font-mono text-xs">{worker |> String.split(".") |> List.last()}</td>
+                <td class="font-mono text-xs">
+                  <a href={filter_url(worker, nil)} class="hover:underline">
+                    {worker |> String.split(".") |> List.last()}
+                  </a>
+                </td>
                 <td class="text-right font-semibold">{total}</td>
                 <td :for={state <- @states} class="text-right">
                   <% count = Map.get(by_state, state, 0) %>
                   <% pct = if total > 0, do: Float.round(count / total * 100, 1), else: 0.0 %>
-                  <span :if={count > 0} class={"text-xs px-1 rounded #{state_class(state)}"}>
+                  <a
+                    :if={count > 0}
+                    href={filter_url(worker, state)}
+                    class={"text-xs px-1 rounded #{state_class(state)} hover:opacity-80"}
+                  >
                     {count} <span class="opacity-60">({pct}%)</span>
-                  </span>
+                  </a>
                   <span :if={count == 0} class="text-base-content/20">—</span>
                 </td>
               </tr>
@@ -201,6 +234,20 @@ defmodule FramelensWeb.Admin.ObanJobLive do
         </div>
       </div>
       """
+    end
+
+    defp filter_url(worker, nil) do
+      "/admin/jobs?" <> Plug.Conn.Query.encode(%{
+        "filters" => %{"worker" => [worker]},
+        "filters_changed" => "true"
+      })
+    end
+
+    defp filter_url(worker, state) do
+      "/admin/jobs?" <> Plug.Conn.Query.encode(%{
+        "filters" => %{"worker" => [worker], "state" => [state]},
+        "filters_changed" => "true"
+      })
     end
 
     defp states, do: @states

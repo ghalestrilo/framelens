@@ -9,6 +9,31 @@ defmodule Framelens.Creators do
   alias Framelens.Creators.Creator
 
   @doc """
+  Inserts a creator with a single YouTube platform entry, skipping silently if
+  that channel_id already exists. Returns :ok regardless.
+  """
+  def import_youtube_creator(name, channel_id) do
+    alias Framelens.Creators.CreatorPlatform
+
+    already_exists =
+      Repo.exists?(
+        from p in CreatorPlatform,
+          where: p.platform == "youtube" and p.platform_id == ^channel_id
+      )
+
+    unless already_exists do
+      %Creator{}
+      |> Creator.changeset_with_platforms(%{
+        name: name,
+        platforms: [%{platform: "youtube", platform_id: channel_id}]
+      })
+      |> Repo.insert()
+    end
+
+    :ok
+  end
+
+  @doc """
   Returns the list of creators.
 
   ## Examples

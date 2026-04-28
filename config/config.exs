@@ -81,7 +81,13 @@ config :backpex,
 config :framelens, Oban,
   repo: Framelens.Repo,
   queues: [feeds: 10],
-  plugins: [{Oban.Plugins.Cron, crontab: [{"*/30 * * * *", Framelens.Jobs.ScheduledSyncJob}]}]
+  plugins: [
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"*/30 * * * *", Framelens.Jobs.ScheduledSyncJob},
+       {"0 3 * * *", Framelens.Jobs.ImportYouTubeCreatorsJob}
+     ]}
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

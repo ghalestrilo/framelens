@@ -31,7 +31,7 @@ defmodule Framelens.PlatformStats do
     most_followed =
       Repo.all(
         from c in Creator,
-          join: f in Follow,
+          full_join: f in Follow,
           on: f.creator_id == c.id,
           group_by: [c.id, c.name],
           order_by: [desc: count(f.id)],

@@ -23,6 +23,9 @@ end
 rsshub_url = System.get_env("RSSHUB_URL") || "http://localhost:1200"
 config :framelens, :rsshub_url, rsshub_url
 
+youtube_api_key = System.get_env("YOUTUBE_API_KEY") || ""
+config :framelens, :youtube_api_key, youtube_api_key
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -4,22 +4,24 @@ defmodule Framelens.YouTube do
   """
 
   @search_url "https://www.googleapis.com/youtube/v3/search"
-  @max_results 150
+  # YouTube API hard cap is 50 per request. Values above 50 are silently clamped by the API.
+  @default_max_results 50
 
   @doc """
-  Returns up to `@max_results` distinct channels whose videos rank highest by
+  Returns up to `:youtube_max_results` distinct channels whose videos rank highest by
   view count for `query`. Searches videos (not channels) so that `order=viewCount`
   is honoured by the API, then extracts the owning channel from each result.
   """
   def search_channels(query) do
     api_key = Application.fetch_env!(:framelens, :youtube_api_key)
+    max_results = Application.get_env(:framelens, :youtube_max_results, @default_max_results)
 
     case Req.get(@search_url,
            params: [
              part: "snippet",
              type: "video",
              q: query,
-             maxResults: @max_results,
+             maxResults: max_results,
              order: "viewCount",
              key: api_key
            ]

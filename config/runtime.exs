@@ -26,6 +26,11 @@ config :framelens, :rsshub_url, rsshub_url
 youtube_api_key = System.get_env("YOUTUBE_API_KEY") || ""
 config :framelens, :youtube_api_key, youtube_api_key
 
+youtube_max_results =
+  System.get_env("YOUTUBE_MAX_RESULTS", "50") |> String.to_integer()
+
+config :framelens, :youtube_max_results, youtube_max_results
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -9,7 +9,7 @@ defmodule Framelens.Creators.Creator do
     field :bio, :string
     field :user_id, :id
 
-    has_many :platforms, CreatorPlatform
+    has_many :platforms, CreatorPlatform, on_delete: :delete_all, on_replace: :delete
 
     timestamps(type: :utc_datetime)
   end
@@ -25,6 +25,10 @@ defmodule Framelens.Creators.Creator do
     creator
     |> cast(attrs, [:name, :bio])
     |> validate_required([:name])
-    |> cast_assoc(:platforms, with: &CreatorPlatform.changeset/2, required: true)
+    |> cast_assoc(:platforms,
+      with: &CreatorPlatform.changeset/2,
+      sort_param: :platforms_order,
+      drop_param: :platforms_delete
+    )
   end
 end

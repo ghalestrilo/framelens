@@ -28,9 +28,6 @@ defmodule FramelensWeb.Admin.CreatorLive do
         module: Backpex.Fields.Text,
         label: "Bio"
       },
-      # TODO: currently does not erase or write, maybe this needs
-      # on_delete: :delete_all and on_replace: :delete at DB/ecto level
-      # Check InlineCRUD docs
       platforms: %{
         module: Backpex.Fields.InlineCRUD,
         label: "Platforms",
@@ -50,5 +47,5 @@ defmodule FramelensWeb.Admin.CreatorLive do
   end
 
   def changeset(creator, attrs, _metadata),
-    do: Framelens.Creators.Creator.changeset(creator, attrs)
+    do: Framelens.Creators.Creator.changeset_with_platforms(creator, attrs)
 end

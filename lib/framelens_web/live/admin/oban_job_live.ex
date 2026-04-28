@@ -1,4 +1,6 @@
 defmodule FramelensWeb.Admin.ObanJobLive do
+  import Ecto.Query, only: [dynamic: 2]
+
   use Backpex.LiveResource,
     per_page_default: 100,
     adapter_config: [
@@ -79,6 +81,19 @@ defmodule FramelensWeb.Admin.ObanJobLive do
     ]
   end
 
+  @impl Backpex.LiveResource
+  def metrics do
+    [
+      worker_states: %{
+        module: FramelensWeb.Admin.ObanJobLive.WorkerStateMetric,
+        label: "Jobs by Worker",
+        class: "w-full",
+        select: dynamic([j], count(j.id)),
+        format: nil
+      }
+    ]
+  end
+
   def filters do
     [
       state: %{
@@ -119,4 +134,80 @@ defmodule FramelensWeb.Admin.ObanJobLive do
   defp get_state_class(%{ state: state }) when state in ["available",  "retryable",  "executing",  "scheduled"], do: "text-yellow-300 bg-yellow-900/50"
   defp get_state_class(%{ state: state }) when state in ["suspended", "cancelled", "discarded"], do: "text-red-300 bg-red-900/50"
   defp get_state_class(_), do: ""
+
+  defmodule WorkerStateMetric do
+    @behaviour Backpex.Metric
+
+    import Ecto.Query
+    use BackpexWeb, :html
+
+    @states ~w(completed available executing scheduled retryable cancelled discarded)
+
+    @impl Backpex.Metric
+    def query(query, _select, repo) do
+      repo.all(
+        from j in query,
+          group_by: [j.worker, j.state],
+          select: {j.worker, j.state, count(j.id)}
+      )
+    end
+
+    @impl Backpex.Metric
+    def format(rows, _format) do
+      rows
+      |> Enum.group_by(fn {worker, _, _} -> worker end, fn {_, state, count} -> {state, count} end)
+      |> Enum.map(fn {worker, state_counts} ->
+        total = Enum.sum(Enum.map(state_counts, fn {_, n} -> n end))
+        by_state = Map.new(state_counts)
+        {worker, total, by_state}
+      end)
+      |> Enum.sort_by(fn {_, total, _} -> total end, :desc)
+    end
+
+    @impl Backpex.Metric
+    def render(assigns) do
+      %{metric: metric} = assigns
+      rows = metric.module.format(metric.data, metric.format)
+      assigns = assign(assigns, rows: rows, states: @states)
+
+      ~H"""
+      <div class={["card bg-base-100 mb-4 shadow-sm w-full", @metric[:class]]}>
+        <div class="card-body p-4">
+          <p class="card-title text-base-content/60 text-sm font-normal mb-2">{@metric.label}</p>
+          <div :if={@rows == []} class="text-base-content/40 text-sm">No jobs found.</div>
+          <table :if={@rows != []} class="table table-xs w-full">
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th class="text-right">Total</th>
+                <th :for={state <- @states} class="text-right">{state}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr :for={{worker, total, by_state} <- @rows}>
+                <td class="font-mono text-xs">{worker |> String.split(".") |> List.last()}</td>
+                <td class="text-right font-semibold">{total}</td>
+                <td :for={state <- @states} class="text-right">
+                  <% count = Map.get(by_state, state, 0) %>
+                  <% pct = if total > 0, do: Float.round(count / total * 100, 1), else: 0.0 %>
+                  <span :if={count > 0} class={"text-xs px-1 rounded #{state_class(state)}"}>
+                    {count} <span class="opacity-60">({pct}%)</span>
+                  </span>
+                  <span :if={count == 0} class="text-base-content/20">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      """
+    end
+
+    defp states, do: @states
+
+    defp state_class("completed"), do: "text-green-300 bg-green-900/50"
+    defp state_class(s) when s in ~w(available retryable executing scheduled), do: "text-yellow-300 bg-yellow-900/50"
+    defp state_class(s) when s in ~w(suspended cancelled discarded), do: "text-red-300 bg-red-900/50"
+    defp state_class(_), do: ""
+  end
 end

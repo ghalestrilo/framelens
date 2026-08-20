@@ -14,6 +14,7 @@ defmodule Framelens.Application do
       {Phoenix.PubSub, name: Framelens.PubSub},
       Framelens.FeedCache,
       Framelens.PlatformStats,
+      Framelens.QueueCache,
       {Oban, Application.fetch_env!(:framelens, Oban)},
       FramelensWeb.Endpoint
     ]

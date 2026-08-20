@@ -1,7 +1,7 @@
 defmodule FramelensWeb.FeedLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.{FeedCache, PlatformStats, Subscriptions}
+  alias Framelens.{FeedCache, PlatformStats, Subscriptions, QueueCache}
   alias Framelens.Jobs.SyncFeedJob
 
   @page_size 20
@@ -51,6 +51,12 @@ defmodule FramelensWeb.FeedLive do
 
   def handle_event("clear_first_follow_flash", _params, socket) do
     {:noreply, assign(socket, first_follow_flash: false)}
+  end
+
+  def handle_event("add_to_queue", %{"url" => url}, socket) do
+    post = Enum.find(socket.assigns.posts, &(&1.url == url))
+    if post, do: QueueCache.add(socket.assigns.current_scope.user.email, post)
+    {:noreply, put_flash(socket, :info, "Added to queue")}
   end
 
   def handle_event("sync", _params, %{assigns: %{user_id: nil}} = socket) do

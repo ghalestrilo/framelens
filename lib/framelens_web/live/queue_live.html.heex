@@ -1,0 +1,47 @@
+<div class={["px-4 py-10 sm:px-6 sm:py-12 lg:px-8 queue-page", @mode == :sidebar && "sidebar-mode ml-auto w-80"]}>
+  <div class="mx-auto max-w-4xl">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Queue</h1>
+      <button phx-click="toggle_mode" class="btn btn-sm btn-outline">
+        <%= if @mode == :fullscreen, do: "Sidebar mode", else: "Fullscreen mode" %>
+      </button>
+    </div>
+
+    <div class={if @mode == :fullscreen, do: "w-full", else: "w-full max-h-48"}>
+      <.video_player
+        video_url={@current_video && (Map.get(@current_video, :youtube) || @current_video.url)}
+        title={(@current_video && @current_video.title) || ""}
+      />
+      <%= if @current_video do %>
+        <div class="mt-3 flex items-center gap-3">
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold truncate">{@current_video.title}</p>
+            <p class="text-sm text-base-content/60">{Map.get(@current_video, :author, "")}</p>
+          </div>
+          <button phx-click="next" class="btn btn-sm btn-outline">Next</button>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-8">
+      <h2 class="text-lg font-bold mb-4">Up Next</h2>
+      <div :if={@queue == []} class="text-base-content/50 py-8 text-center">Your queue is empty.</div>
+      <ul class="divide-y divide-base-200">
+        <li :for={post <- @queue} class="flex items-center gap-3 py-3">
+          <div class="flex-1 min-w-0">
+            <p class="font-medium truncate">{post.title}</p>
+            <p class="text-xs text-base-content/50">{Map.get(post, :author, "")}</p>
+          </div>
+          <button phx-click="play" phx-value-url={post.url} class="btn btn-xs btn-ghost">Play</button>
+          <button
+            phx-click="remove_from_queue"
+            phx-value-url={post.url}
+            class="btn btn-xs btn-ghost text-error"
+          >
+            Remove
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

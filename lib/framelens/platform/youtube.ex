@@ -6,10 +6,16 @@ defimpl Framelens.Platform, for: Framelens.Platform.YouTube do
   # Main scenario: using @ for platform IDs.
   def fetch_content(%{platform_id: "@" <> id, name: name}) do
     base = Application.fetch_env!(:framelens, :rsshub_url)
-    url = "#{base}/youtube/user/@#{id}"
+    url = "#{base}/youtube/user/@#{URI.encode(id)}"
 
     with {:ok, %{status: 200, body: xml}} <- Req.get(url),
-         stripped = Regex.replace(~r/(<item>.*?)<description>.*?<\/description>(.*?<\/item>)/s, xml, "\\1<description>.</description>\\2", global: true),
+         stripped <-
+           Regex.replace(
+             ~r/(<item>.*?)<description>.*?<\/description>(.*?<\/item>)/s,
+             xml,
+             "\\1<description>.</description>\\2",
+             global: true
+           ),
          {:ok, feed} <- ElixirRss.parse(stripped, url) do
       {:ok, Enum.map(feed.entries, &Map.put(&1, :author, name))}
     else

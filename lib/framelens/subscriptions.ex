@@ -7,6 +7,7 @@ defmodule Framelens.Subscriptions do
   alias Framelens.Repo
 
   alias Framelens.Subscriptions.Subscription
+  alias Framelens.Subscriptions.Follow
 
   @doc """
   Returns the list of subscription.
@@ -101,23 +102,20 @@ defmodule Framelens.Subscriptions do
   def followed_creators_for_user(user_id) do
     Repo.all(
       from f in Follow,
-        join: c in Creator,
-        on: c.id == f.creator_id,
-        where: f.user_id == ^user_id,
-        select: %{id: c.id, name: c.name, follow_id: f.id}
+        where: f.user_id == ^user_id
     )
+    |> Repo.preload(creator: [:platforms])
   end
 
   def subscribe_new_creator(user_id, name, platforms) when is_list(platforms) do
     Repo.transaction(fn ->
       creator =
-        Repo.insert!(
-          %Framelens.Creators.Creator{}
-          |> Framelens.Creators.Creator.changeset_with_platforms(%{
-            name: name,
-            platforms: platforms
-          })
-        )
+        %Framelens.Creators.Creator{}
+        |> Framelens.Creators.Creator.changeset_with_platforms(%{
+          name: name,
+          platforms: platforms
+        })
+        |> Repo.insert!()
 
       {:ok, follow} = follow_creator(user_id, creator.id)
       follow

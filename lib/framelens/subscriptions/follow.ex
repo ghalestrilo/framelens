@@ -1,11 +1,12 @@
 defmodule Framelens.Subscriptions.Follow do
   use Ecto.Schema
   import Ecto.Changeset
+  alias Framelens.Creators.Creator
 
   schema "follows" do
     field :user_id, :id
-    field :creator_id, :id
 
+    belongs_to :creator, Creator
     timestamps(type: :utc_datetime)
   end
 

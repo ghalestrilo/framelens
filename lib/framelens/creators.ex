@@ -48,7 +48,14 @@ defmodule Framelens.Creators do
 
   def search_creators(query) do
     term = "%#{query}%"
-    Repo.all(from c in Creator, where: ilike(c.name, ^term), order_by: c.name, limit: 10)
+
+    Repo.all(
+      from c in Creator,
+        where: ilike(c.name, ^term),
+        order_by: c.name,
+        limit: 10,
+        preload: :platforms
+    )
   end
 
   @doc """

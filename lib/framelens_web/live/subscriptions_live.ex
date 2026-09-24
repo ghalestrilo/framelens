@@ -164,11 +164,14 @@ defmodule FramelensWeb.SubscriptionsLive do
           You're not following anyone yet.
         </div>
         <ul class="divide-y divide-base-200">
-          <li :for={creator <- @followed} class="flex items-center justify-between py-3">
-            <span class="font-medium">{creator.name}</span>
+          <li :for={followed <- @followed} class="flex items-center justify-between py-3">
+            <span class="font-medium w-full">{followed.creator.name}</span>
+            <span class="font-medium w-full">
+              {inspect(Enum.map(followed.creator.platforms, & &1.platform_id))}
+            </span>
             <button
               phx-click="unfollow"
-              phx-value-id={creator.id}
+              phx-value-id={followed.creator_id}
               class="btn btn-sm btn-ghost text-error"
             >
               Unfollow
@@ -215,6 +218,11 @@ defmodule FramelensWeb.SubscriptionsLive do
           <p class="text-sm text-base-content/60">
             No creators found for <strong>{@search}</strong>. Add them manually:
           </p>
+        </div>
+        <h2 class="font-semibold text-sm text-base-content/60 uppercase tracking-wide">
+          Or add one manually
+        </h2>
+        <div>
           <.form
             for={@new_form}
             phx-change="validate_new"

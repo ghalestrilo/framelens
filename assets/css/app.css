@@ -105,3 +105,14 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+/* Smooth view transition for the video player when toggling sidebar ↔ fullscreen.
+   The iframe keeps the same id so LiveView morphs it in place; the browser animates
+   the size/position change using the named view-transition. */
+@supports (view-transition-name: none) {
+  ::view-transition-old(video-player),
+  ::view-transition-new(video-player) {
+    animation-duration: 250ms;
+    animation-timing-function: ease-in-out;
+  }
+}

@@ -8,231 +8,121 @@
   You've followed your first creator! Manage your follows in the <.link navigate={~p"/subscriptions"} class="font-semibold underline">Subscriptions</.link> page.
 </.flash>
 
-<div class="px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-  <%# Outer wrapper: row in sidebar mode, column otherwise %>
-  <div class={[
-    "mx-auto max-w-7xl",
-    @player_mode == :sidebar && "flex flex-row gap-6 items-start"
-  ]}>
+<div class={[
+  "px-4 py-10 sm:px-6 sm:py-12 lg:px-8 flex gap-6",
+  @player_mode == :sidebar && "flex-row items-start max-w-7xl mx-auto",
+  @player_mode != :sidebar && "flex-col"
+]}>
 
-    <%# ── Feed section (left / full-width) ── %>
-    <div class={[@player_mode == :sidebar && "flex-1 min-w-0"]}>
-      <div class="mb-8 flex justify-between items-center">
-        <h1 class="text-3xl font-bold">Video Library</h1>
-        <div class="flex items-center gap-4">
-          <button
-            :if={@suggested_creators == []}
-            phx-click="sync"
-            class="btn btn-primary"
-            disabled={@syncing}
-          >
-            <%= if @syncing do %>
-              <span class="loading loading-spinner loading-sm"></span>
-            <% end %>
-            Sync
-          </button>
-          <Layouts.theme_toggle />
-        </div>
-      </div>
-
-      <%= if @suggested_creators != [] do %>
-        <div class="flex flex-col items-center gap-6 py-16 text-center">
-          <p class="text-lg text-base-content/70">
-            You're not following anyone yet. Here are some popular channels to get you started:
-          </p>
-          <div class="w-full max-w-sm">
-            <.live_component
-              module={FramelensWeb.CreatorListComponent}
-              id="feed-suggestions"
-              creators={@suggested_creators}
-              followed_ids={MapSet.new()}
-              on_follow={:feed_follow}
-              on_unfollow={:feed_unfollow}
-            />
-          </div>
-          <a href={~p"/subscriptions"} class="btn btn-outline">Browse all channels</a>
-        </div>
-      <% else %>
-        <%# Feed table — only rendered here when NOT in fullscreen (fullscreen renders it below) %>
-        <div
-          :if={@player_mode != :fullscreen}
-          class="overflow-x-auto rounded-lg border border-base-300"
-          id="posts-container"
-          phx-hook="InfiniteScroll"
-        >
-          <table class="table table-zebra w-full">
-            <thead>
-              <tr>
-                <th class="bg-base-200 text-center">Queue</th>
-                <th class="bg-base-200">Author</th>
-                <th class="bg-base-200 w-32">Time</th>
-                <th class="bg-base-200">Title</th>
-                <th class="bg-base-200 text-center">YouTube</th>
-                <th class="bg-base-200 text-center">Facebook</th>
-                <th class="bg-base-200 text-center">TikTok</th>
-                <th class="bg-base-200 text-center">Instagram</th>
-              </tr>
-            </thead>
-            <tbody>
-              <%= for post <- @posts do %>
-                <tr>
-                  <td class="text-center">
-                    <button
-                      phx-click="add_to_queue"
-                      phx-value-url={post.url}
-                      class="btn btn-sm btn-ghost"
-                      title="Add to queue"
-                    >+</button>
-                  </td>
-                  <td class="text-base-content/70">{Map.get(post, :author, "")}</td>
-                  <td class="text-base-content/70">
-                    {post |> Map.get(:updated, nil) |> DateTime.to_date()}
-                  </td>
-                  <td class="font-medium">{post.title}</td>
-                  <td class="text-center">
-                    <%= if Map.get(post, :youtube) || Map.get(post, :url) do %>
-                      <a
-                        href={Map.get(post, :youtube) || Map.get(post, :url)}
-                        target="_blank"
-                        class="btn btn-sm btn-ghost hover:btn-error"
-                        title="Watch on YouTube"
-                      >
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                        </svg>
-                      </a>
-                    <% else %>
-                      <span class="text-base-content/30">-</span>
-                    <% end %>
-                  </td>
-                  <td class="text-center">
-                    <%= if Map.get(post, :facebook) do %>
-                      <a href={post.facebook} target="_blank" class="btn btn-sm btn-ghost hover:btn-primary" title="Watch on Facebook">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                        </svg>
-                      </a>
-                    <% else %>
-                      <span class="text-base-content/30">-</span>
-                    <% end %>
-                  </td>
-                  <td class="text-center">
-                    <%= if Map.get(post, :tiktok) do %>
-                      <a href={post.tiktok} target="_blank" class="btn btn-sm btn-ghost hover:btn-info" title="Watch on TikTok">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-                        </svg>
-                      </a>
-                    <% else %>
-                      <span class="text-base-content/30">-</span>
-                    <% end %>
-                  </td>
-                  <td class="text-center">
-                    <%= if Map.get(post, :instagram) do %>
-                      <a href={post.instagram} target="_blank" class="btn btn-sm btn-ghost hover:btn-secondary" title="Watch on Instagram">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z" />
-                        </svg>
-                      </a>
-                    <% else %>
-                      <span class="text-base-content/30">-</span>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-          <div :if={@has_more} id="posts-sentinel" class="h-4"></div>
-        </div>
-      <% end %>
-    </div>
-
-    <%# ── Queue sidebar (right column, sidebar mode only) ── %>
-    <div :if={@player_mode == :sidebar} class="queue-sidebar w-80 shrink-0 sticky top-4">
-      <div class="rounded-lg border border-base-300 overflow-hidden">
-        <%# Mini player %>
-        <div class="max-h-48 overflow-hidden">
-          <.video_player
-            video_url={@current_video && (Map.get(@current_video, :youtube) || @current_video.url)}
-            title={(@current_video && @current_video.title) || ""}
-          />
-        </div>
-
-        <div class="p-3 border-b border-base-300">
-          <%= if @current_video do %>
-            <p class="font-semibold text-sm truncate">{@current_video.title}</p>
-            <p class="text-xs text-base-content/60 truncate">{Map.get(@current_video, :author, "")}</p>
-          <% end %>
-          <div class="flex items-center gap-2 mt-2">
-            <button phx-click="next" class="btn btn-xs btn-ghost">Next</button>
-            <button phx-click="expand_player" class="btn btn-xs btn-outline ml-auto">Expand ▶</button>
-          </div>
-        </div>
-
-        <div class="p-3">
-          <h2 class="text-sm font-bold mb-2">Up Next</h2>
-          <div :if={@queue == []} class="text-xs text-base-content/50">Queue is empty.</div>
-          <ul class="divide-y divide-base-200">
-            <li :for={post <- @queue} class="py-2 flex items-start gap-2">
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-medium truncate">{post.title}</p>
-                <p class="text-xs text-base-content/50 truncate">{Map.get(post, :author, "")}</p>
-              </div>
-              <button phx-click="play" phx-value-url={post.url} class="btn btn-xs btn-ghost shrink-0">Play</button>
-              <button phx-click="remove_from_queue" phx-value-url={post.url} class="btn btn-xs btn-ghost text-error shrink-0">✕</button>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-  </div><%# end outer wrapper %>
-
-  <%# ── Fullscreen mode: stacked player + queue + feed ── %>
-  <div :if={@player_mode == :fullscreen} class="player-fullscreen mx-auto max-w-4xl mt-6 space-y-6">
-
-    <%# Full-size player %>
-    <div class="rounded-lg overflow-hidden border border-base-300">
+  <%!-- Player area — comes first in DOM so it naturally appears above feed in fullscreen.
+       In sidebar mode, CSS order pushes it to the right column.
+       This div is NEVER destroyed during sidebar ↔ fullscreen transitions — only classes change. --%>
+  <div
+    :if={@player_mode != :hidden}
+    id="player-area"
+    class={[
+      @player_mode == :sidebar && "queue-sidebar w-80 shrink-0 sticky top-4 order-2",
+      @player_mode == :fullscreen && "player-fullscreen w-full max-w-4xl mx-auto space-y-6"
+    ]}
+  >
+    <%!-- Single video player — stable across sidebar ↔ fullscreen; only classes change --%>
+    <div
+      id="video-player-container"
+      class={[
+        "rounded-lg border border-base-300 overflow-hidden",
+        @player_mode == :sidebar && "max-h-48"
+      ]}
+    >
       <.video_player
         video_url={@current_video && (Map.get(@current_video, :youtube) || @current_video.url)}
         title={(@current_video && @current_video.title) || ""}
       />
-      <div class="p-4 flex items-center gap-3">
-        <div class="flex-1 min-w-0">
-          <%= if @current_video do %>
-            <p class="font-semibold truncate">{@current_video.title}</p>
-            <p class="text-sm text-base-content/60">{Map.get(@current_video, :author, "")}</p>
-          <% end %>
-        </div>
-        <button phx-click="next" class="btn btn-sm btn-outline">Next</button>
-        <button phx-click="collapse_player" class="btn btn-sm btn-ghost">◀ Collapse</button>
+    </div>
+
+    <%!-- Controls: title, next, expand/collapse --%>
+    <div class={[
+      "border-b border-base-300",
+      @player_mode == :sidebar && "p-3",
+      @player_mode == :fullscreen && "p-4 flex items-center gap-3"
+    ]}>
+      <div class={[@player_mode == :fullscreen && "flex-1 min-w-0"]}>
+        <%= if @current_video do %>
+          <p class={["font-semibold truncate", @player_mode == :sidebar && "text-sm"]}>{@current_video.title}</p>
+          <p class={["text-base-content/60 truncate", @player_mode == :sidebar && "text-xs", @player_mode == :fullscreen && "text-sm"]}>{Map.get(@current_video, :author, "")}</p>
+        <% end %>
+      </div>
+      <div class={["flex items-center gap-2", @player_mode == :sidebar && "mt-2"]}>
+        <button phx-click="next" class={["btn btn-ghost", @player_mode == :sidebar && "btn-xs", @player_mode == :fullscreen && "btn-sm"]}>Next</button>
+        <%= if @player_mode == :sidebar do %>
+          <button phx-click="expand_player" class="btn btn-xs btn-outline ml-auto">Expand ▶</button>
+        <% else %>
+          <button phx-click="collapse_player" class="btn btn-sm btn-ghost">◀ Collapse</button>
+        <% end %>
       </div>
     </div>
 
-    <%# Queue list %>
-    <div class="rounded-lg border border-base-300 p-4">
-      <h2 class="text-lg font-bold mb-3">Queue</h2>
-      <div :if={@queue == []} class="text-base-content/50 text-sm">Your queue is empty.</div>
+    <%!-- Queue list --%>
+    <div class={[@player_mode == :sidebar && "p-3", @player_mode == :fullscreen && "rounded-lg border border-base-300 p-4"]}>
+      <h2 class={["font-bold mb-2", @player_mode == :sidebar && "text-sm", @player_mode == :fullscreen && "text-lg mb-3"]}>Up Next</h2>
+      <div :if={@queue == []} class={["text-base-content/50", @player_mode == :sidebar && "text-xs", @player_mode == :fullscreen && "text-sm"]}>Queue is empty.</div>
       <ul class="divide-y divide-base-200">
-        <li :for={post <- @queue} class="py-3 flex items-center gap-3">
+        <li :for={post <- @queue} class={["flex items-start gap-2", @player_mode == :sidebar && "py-2", @player_mode == :fullscreen && "py-3 gap-3"]}>
           <div class="flex-1 min-w-0">
-            <p class="font-medium truncate">{post.title}</p>
-            <p class="text-xs text-base-content/50">{Map.get(post, :author, "")}</p>
+            <p class={["font-medium truncate", @player_mode == :sidebar && "text-xs", @player_mode == :fullscreen && "text-sm"]}>{post.title}</p>
+            <p class="text-xs text-base-content/50 truncate">{Map.get(post, :author, "")}</p>
           </div>
-          <button phx-click="play" phx-value-url={post.url} class="btn btn-xs btn-ghost">Play</button>
-          <button phx-click="remove_from_queue" phx-value-url={post.url} class="btn btn-xs btn-ghost text-error">Remove</button>
+          <button phx-click="play" phx-value-url={post.url} class="btn btn-xs btn-ghost shrink-0">Play</button>
+          <button phx-click="remove_from_queue" phx-value-url={post.url} class="btn btn-xs btn-ghost text-error shrink-0">✕</button>
         </li>
       </ul>
     </div>
+  </div>
 
-    <%# Live feed table (same data, infinite scroll — only one posts-container in DOM at a time) %>
-    <div>
-      <h2 class="text-2xl font-bold mb-4">Video Library</h2>
-      <div
-        class="overflow-x-auto rounded-lg border border-base-300"
-        id="posts-container"
-        phx-hook="InfiniteScroll"
-      >
+  <%!-- Feed section — always rendered; order-1 in sidebar mode keeps it on the left --%>
+  <div
+    id="feed-section"
+    class={[
+      @player_mode == :sidebar && "flex-1 min-w-0 order-1",
+      @player_mode != :sidebar && "w-full mx-auto max-w-7xl"
+    ]}
+  >
+    <div class="mb-8 flex justify-between items-center">
+      <h1 class="text-3xl font-bold">Video Library</h1>
+      <div class="flex items-center gap-4">
+        <button
+          :if={@suggested_creators == []}
+          phx-click="sync"
+          class="btn btn-primary"
+          disabled={@syncing}
+        >
+          <%= if @syncing do %>
+            <span class="loading loading-spinner loading-sm"></span>
+          <% end %>
+          Sync
+        </button>
+        <Layouts.theme_toggle />
+      </div>
+    </div>
+
+    <%= if @suggested_creators != [] do %>
+      <div class="flex flex-col items-center gap-6 py-16 text-center">
+        <p class="text-lg text-base-content/70">
+          You're not following anyone yet. Here are some popular channels to get you started:
+        </p>
+        <div class="w-full max-w-sm">
+          <.live_component
+            module={FramelensWeb.CreatorListComponent}
+            id="feed-suggestions"
+            creators={@suggested_creators}
+            followed_ids={MapSet.new()}
+            on_follow={:feed_follow}
+            on_unfollow={:feed_unfollow}
+          />
+        </div>
+        <a href={~p"/subscriptions"} class="btn btn-outline">Browse all channels</a>
+      </div>
+    <% else %>
+      <div class="overflow-x-auto rounded-lg border border-base-300" id="posts-container" phx-hook="InfiniteScroll">
         <table class="table table-zebra w-full">
           <thead>
             <tr>
@@ -250,24 +140,15 @@
             <%= for post <- @posts do %>
               <tr>
                 <td class="text-center">
-                  <button
-                    phx-click="add_to_queue"
-                    phx-value-url={post.url}
-                    class="btn btn-sm btn-ghost"
-                    title="Add to queue"
-                  >+</button>
+                  <button phx-click="add_to_queue" phx-value-url={post.url} class="btn btn-sm btn-ghost" title="Add to queue">+</button>
                 </td>
                 <td class="text-base-content/70">{Map.get(post, :author, "")}</td>
-                <td class="text-base-content/70">
-                  {post |> Map.get(:updated, nil) |> DateTime.to_date()}
-                </td>
+                <td class="text-base-content/70">{post |> Map.get(:updated, nil) |> DateTime.to_date()}</td>
                 <td class="font-medium">{post.title}</td>
                 <td class="text-center">
                   <%= if Map.get(post, :youtube) || Map.get(post, :url) do %>
                     <a href={Map.get(post, :youtube) || Map.get(post, :url)} target="_blank" class="btn btn-sm btn-ghost hover:btn-error" title="Watch on YouTube">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                      </svg>
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" /></svg>
                     </a>
                   <% else %>
                     <span class="text-base-content/30">-</span>
@@ -276,9 +157,7 @@
                 <td class="text-center">
                   <%= if Map.get(post, :facebook) do %>
                     <a href={post.facebook} target="_blank" class="btn btn-sm btn-ghost hover:btn-primary" title="Watch on Facebook">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                      </svg>
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
                     </a>
                   <% else %>
                     <span class="text-base-content/30">-</span>
@@ -287,9 +166,7 @@
                 <td class="text-center">
                   <%= if Map.get(post, :tiktok) do %>
                     <a href={post.tiktok} target="_blank" class="btn btn-sm btn-ghost hover:btn-info" title="Watch on TikTok">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-                      </svg>
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" /></svg>
                     </a>
                   <% else %>
                     <span class="text-base-content/30">-</span>
@@ -298,9 +175,7 @@
                 <td class="text-center">
                   <%= if Map.get(post, :instagram) do %>
                     <a href={post.instagram} target="_blank" class="btn btn-sm btn-ghost hover:btn-secondary" title="Watch on Instagram">
-                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z" />
-                      </svg>
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z" /></svg>
                     </a>
                   <% else %>
                     <span class="text-base-content/30">-</span>
@@ -312,7 +187,7 @@
         </table>
         <div :if={@has_more} id="posts-sentinel" class="h-4"></div>
       </div>
-    </div>
+    <% end %>
+  </div>
 
-  </div><%# end player-fullscreen %>
 </div>

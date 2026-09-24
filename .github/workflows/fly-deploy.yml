@@ -8,6 +8,7 @@ on:
 jobs:
   deploy-rsshub:
     name: Deploy RSSHub
+    environment: prod
     runs-on: ubuntu-latest
     concurrency: deploy-rsshub-group
     steps:
@@ -19,6 +20,7 @@ jobs:
 
   deploy:
     name: Deploy app
+    environment: prod
     runs-on: ubuntu-latest
     concurrency: deploy-group    # optional: ensure only one action runs at a time
     steps:

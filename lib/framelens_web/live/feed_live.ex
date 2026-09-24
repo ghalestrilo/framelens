@@ -1,7 +1,9 @@
 defmodule FramelensWeb.FeedLive do
   use FramelensWeb, :live_view
 
-  alias Framelens.{FeedCache, PlatformStats, Subscriptions, QueueCache}
+  import FramelensWeb.VideoPlayerComponent
+
+  alias Framelens.{Accounts, FeedCache, PlatformStats, Subscriptions, QueueCache}
   alias Framelens.Jobs.SyncFeedJob
 
   @page_size 20
@@ -53,12 +55,6 @@ defmodule FramelensWeb.FeedLive do
     {:noreply, assign(socket, first_follow_flash: false)}
   end
 
-  def handle_event("add_to_queue", %{"url" => url}, socket) do
-    post = Enum.find(socket.assigns.posts, &(&1.url == url))
-    if post, do: QueueCache.add(socket.assigns.current_scope.user.email, post)
-    {:noreply, put_flash(socket, :info, "Added to queue")}
-  end
-
   def handle_event("sync", _params, %{assigns: %{user_id: nil}} = socket) do
     {:noreply, socket}
   end
@@ -66,6 +62,59 @@ defmodule FramelensWeb.FeedLive do
   def handle_event("sync", _params, socket) do
     enqueue_sync(socket.assigns.user_id)
     {:noreply, assign(socket, syncing: true, pending_count: nil)}
+  end
+
+  def handle_event("add_to_queue", %{"url" => url}, socket) do
+    post = Enum.find(socket.assigns.posts, &(&1.url == url))
+    if post, do: QueueCache.add(socket.assigns.email, post)
+    queue = QueueCache.get(socket.assigns.email)
+    current = socket.assigns.current_video || List.first(queue)
+    mode = if queue == [], do: :hidden, else: max_mode(socket.assigns.player_mode, :sidebar)
+
+    {:noreply,
+     socket
+     |> put_flash(:info, "Added to queue")
+     |> assign(queue: queue, current_video: current, player_mode: mode)}
+  end
+
+  def handle_event("play", %{"url" => url}, socket) do
+    post = Enum.find(socket.assigns.queue, &(&1.url == url))
+    {:noreply, assign(socket, current_video: post)}
+  end
+
+  def handle_event("remove_from_queue", %{"url" => url}, socket) do
+    QueueCache.remove(socket.assigns.email, url)
+    queue = QueueCache.get(socket.assigns.email)
+
+    current =
+      if socket.assigns.current_video && socket.assigns.current_video.url == url,
+        do: List.first(queue),
+        else: socket.assigns.current_video
+
+    mode = if queue == [], do: :hidden, else: socket.assigns.player_mode
+    {:noreply, assign(socket, queue: queue, current_video: current, player_mode: mode)}
+  end
+
+  def handle_event("next", _params, socket) do
+    next =
+      case socket.assigns.current_video do
+        nil ->
+          nil
+
+        cur ->
+          idx = Enum.find_index(socket.assigns.queue, &(&1.url == cur.url))
+          Enum.at(socket.assigns.queue, (idx || 0) + 1)
+      end
+
+    {:noreply, assign(socket, current_video: next)}
+  end
+
+  def handle_event("expand_player", _params, socket) do
+    {:noreply, assign(socket, player_mode: :fullscreen)}
+  end
+
+  def handle_event("collapse_player", _params, socket) do
+    {:noreply, assign(socket, player_mode: :sidebar)}
   end
 
   def handle_info({:sync_started, _user_id, 0}, socket) do
@@ -95,8 +144,12 @@ defmodule FramelensWeb.FeedLive do
       syncing: false,
       pending_count: nil,
       user_id: user_id,
+      email: nil,
       suggested_creators: Enum.take(PlatformStats.most_followed(), 5),
-      first_follow_flash: false
+      first_follow_flash: false,
+      queue: [],
+      current_video: nil,
+      player_mode: :hidden
     }
   end
 
@@ -108,21 +161,34 @@ defmodule FramelensWeb.FeedLive do
       syncing: false,
       pending_count: nil,
       user_id: nil,
+      email: nil,
       suggested_creators: [],
-      first_follow_flash: false
+      first_follow_flash: false,
+      queue: [],
+      current_video: nil,
+      player_mode: :hidden
     }
   end
 
   defp base_assigns(user_id, _followed) do
+    user = Accounts.get_user!(user_id)
+    email = user.email
     cached = FeedCache.get(user_id)
+    queue = QueueCache.get(email)
+    current_video = List.first(queue)
+    player_mode = if queue == [], do: :hidden, else: :sidebar
 
     paginate(cached || [], @page_size)
     |> Map.merge(%{
       syncing: is_nil(cached),
       pending_count: nil,
       user_id: user_id,
+      email: email,
       suggested_creators: [],
-      first_follow_flash: false
+      first_follow_flash: false,
+      queue: queue,
+      current_video: current_video,
+      player_mode: player_mode
     })
   end
 
@@ -136,4 +202,7 @@ defmodule FramelensWeb.FeedLive do
     |> SyncFeedJob.new()
     |> Oban.insert()
   end
+
+  defp max_mode(:fullscreen, _), do: :fullscreen
+  defp max_mode(_, new), do: new
 end

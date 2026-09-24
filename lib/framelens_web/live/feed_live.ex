@@ -16,7 +16,7 @@ defmodule FramelensWeb.FeedLive do
     if user_id && connected?(socket) do
       Phoenix.PubSub.subscribe(Framelens.PubSub, "feed:#{user_id}")
 
-      Enum.each(followed, fn %{name: name} ->
+      Enum.each(followed, fn %{creator: %{name: name}} ->
         Phoenix.PubSub.subscribe(Framelens.PubSub, "creator:#{name}")
       end)
     end
@@ -48,7 +48,12 @@ defmodule FramelensWeb.FeedLive do
     {:noreply,
      socket
      |> assign(paginate(all_posts, @page_size))
-     |> assign(suggested_creators: [], syncing: true, pending_count: nil, first_follow_flash: true)}
+     |> assign(
+       suggested_creators: [],
+       syncing: true,
+       pending_count: nil,
+       first_follow_flash: true
+     )}
   end
 
   def handle_event("clear_first_follow_flash", _params, socket) do

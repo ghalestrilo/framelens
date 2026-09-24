@@ -24,7 +24,7 @@ defmodule Framelens.FeedCache do
   def get(user_id) do
     followed_names =
       Subscriptions.followed_creators_for_user(user_id)
-      |> Enum.map(& &1.name)
+      |> Enum.map(& &1.creator.name)
       |> MapSet.new()
 
     cached = Agent.get(__MODULE__, &Map.filter(&1, fn {name, _} -> name in followed_names end))
